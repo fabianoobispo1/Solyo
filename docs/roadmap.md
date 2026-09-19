@@ -96,8 +96,11 @@ detalhe/premissa original quando existir.
       (`src/components/dashboard/`) e E2E de fluxo completo (ex:
       Playwright) — lacuna consciente, ver `docs/testing.md`.
 - [ ] Observabilidade (erros, analytics de uso do portal).
-- [ ] Revisão de segurança do portal público (rate limiting, enumeração de
-      tokens).
+- [x] Revisão de segurança do portal público — login já tem rate limiting
+      (nativo do Convex Auth) e tokens são inviáveis de enumerar (128 bits);
+      decidido não investir em rate limiting por IP agora (exigiria migrar
+      rotas públicas pra `httpAction`) até haver sinal real de abuso. Ver
+      `docs/backend-convex.md`.
 - [x] Deployment de produção do Convex publicado, com env vars e seed de
       demonstração — ver `docs/backend-convex.md`.
 - [x] Deploy automático a cada push em `main` (`vercel git connect` ligado

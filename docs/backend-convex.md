@@ -162,6 +162,45 @@ A única função que **não** exige tenant é `plants.getByToken`
 cliente final, resolvida pelo `portalToken` não-adivinhável, e devolve só
 os dados daquela usina — nunca das outras do mesmo integrador.
 
+## Segurança das rotas públicas (revisão feita, sem mudança de código)
+
+Item que estava como TODO no `docs/roadmap.md` ("rate limiting, enumeração
+de tokens") — investigado e a conclusão foi **deixar como está por
+enquanto**, com esse raciocínio registrado pra não precisar reabrir a
+mesma investigação depois:
+
+- **Login (`/login`, `convex/auth.ts`) já tem rate limiting.** O
+  `@convex-dev/auth` vem com uma tabela `authRateLimits` própria e bloqueia
+  por padrão depois de 10 tentativas de senha erradas por hora, por
+  e-mail, com recarga gradual (`Password.maxFailedAttempsPerHour` pra
+  mudar o número, não configurado aqui — usa o default). Isso já roda sem
+  nenhum código nosso. A mensagem de erro no `/login` também já é genérica
+  ("E-mail ou senha incorretos"), então não dá pra usar o form pra
+  descobrir se um e-mail tem conta ou não.
+- **Tokens (`plants.portalToken`, `invites.token`) são 128 bits aleatórios**
+  (`crypto.getRandomValues`, ver `convex/lib/tokens.ts`). Adivinhar um por
+  força bruta é inviável (2^128 combinações) — "enumeração de tokens" não é
+  um risco prático aqui, dado esse tamanho de espaço.
+- **`plants.getByToken` e `invites.getStatus` são `query`, não dá pra
+  colocar um limitador de taxa clássico (contador + escrita no banco)
+  nelas** — funções `query` do Convex não podem escrever no banco, de
+  propósito (são read-only e reativas). Um limitador de verdade exigiria
+  reescrever essas duas como `httpAction` (só ali dá pra ler o IP de quem
+  chamou, via `request.headers`) — mudança de arquitetura, não uma feature
+  pequena, e não pareceu valer a pena sem sinal real de abuso.
+- **`invites.accept` é a única ação pública que escreve** (cria conta).
+  Antes de fazer qualquer trabalho caro (hash de senha via `createAccount`),
+  ela já valida o token e falha rápido se for inválido — então uma
+  varredura com tokens aleatórios já é barata de rejeitar, mesmo sem
+  limitador nenhum.
+
+Se o produto crescer e aparecer sinal real de abuso (tráfego anômalo nos
+logs do Convex, custo de função disparando), os dois próximos passos nessa
+ordem seriam: (1) throttling leve por token específico em `invites.accept`
+usando a própria tabela `invites` (protege contra alguém martelando um
+token só, não uma varredura ampla) e (2) migrar `getByToken`/`getStatus`
+pra `httpAction` com limite por IP (proteção de verdade, reescrita maior).
+
 ## Camada de dados no Next (`src/lib/data/`)
 
 As páginas nunca importam `convex/_generated/api` nem os mocks antigos
