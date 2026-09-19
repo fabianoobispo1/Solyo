@@ -19,15 +19,14 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { label: "Painel", href: "/dashboard", icon: <GridIcon /> },
-  { label: "Clientes", href: "/clientes", icon: <UsersIcon />, disabled: true },
-  { label: "Portais", href: "/portais", icon: <GlobeIcon />, disabled: true },
+  { label: "Clientes", href: "/clientes", icon: <UsersIcon /> },
+  { label: "Portais", href: "/portais", icon: <GlobeIcon /> },
 ];
 
 const settingsItem: NavItem = {
   label: "Configurações",
   href: "/configuracoes",
   icon: <SettingsIcon />,
-  disabled: true,
 };
 
 export interface SidebarProps {

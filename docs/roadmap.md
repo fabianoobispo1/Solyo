@@ -61,9 +61,11 @@ detalhe/premissa original quando existir.
       — client-side por enquanto, ver `docs/dashboard-integrador.md`.
 - [ ] Paginação de verdade (continua decorativa; o rodapé já mostra a
       contagem real filtrada).
-- [ ] Rotas `/clientes`, `/portais`, `/configuracoes`/`/conta` — hoje os
-      itens da Sidebar e do BottomNav apontam pra elas mas estão
-      desabilitados por não existirem.
+- [x] Rotas `/clientes` (busca/filtro/tabela dedicados, via `ClientsPanel`
+      extraído do dashboard), `/portais` (lista de links por cliente) e
+      `/configuracoes` (perfil + sair — o `/conta` do BottomNav mobile
+      aponta pra essa mesma rota). Sidebar e BottomNav não têm mais itens
+      desabilitados. Ver `docs/dashboard-integrador.md`.
 
 ## Fase 3 — Dados reais e autenticação
 
@@ -93,8 +95,8 @@ detalhe/premissa original quando existir.
       (trap de foco/Tab/Escape), KPICard, SolvoLogo, ClientTableRow,
       ClientCard) e dos componentes de `src/components/dashboard/` que
       dependem do Convex (`NewClientModal`/`EditClientModal`, mockando
-      `useCreatePlant`/`useUpdatePlant`). Ver `docs/testing.md`. 104 testes
-      no total.
+      `useCreatePlant`/`useUpdatePlant`; `PortalLinkRow`). Ver
+      `docs/testing.md`. 108 testes no total.
 - [ ] E2E de fluxo completo (ex: Playwright) — lacuna consciente, ver
       `docs/testing.md`.
 - [ ] Observabilidade (erros, analytics de uso do portal).

@@ -16,9 +16,11 @@ interface TabItem {
 
 const tabs: TabItem[] = [
   { label: "Painel", href: "/dashboard", icon: <GridIcon size={22} /> },
-  { label: "Clientes", href: "/clientes", icon: <UsersIcon size={22} />, disabled: true },
-  { label: "Portais", href: "/portais", icon: <GlobeIcon size={22} />, disabled: true },
-  { label: "Conta", href: "/conta", icon: <AccountIcon size={22} />, disabled: true },
+  { label: "Clientes", href: "/clientes", icon: <UsersIcon size={22} /> },
+  { label: "Portais", href: "/portais", icon: <GlobeIcon size={22} /> },
+  // Rótulo "Conta" (DESIGN.md §bottom nav) apontando pra mesma página de
+  // configurações da Sidebar — não há uma tela de conta separada.
+  { label: "Conta", href: "/configuracoes", icon: <AccountIcon size={22} /> },
 ];
 
 export function BottomNav() {

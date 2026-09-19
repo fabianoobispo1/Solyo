@@ -7,20 +7,25 @@ Implementação do layout descrito em `DESIGN.md` §4.2 (Dashboard — Web) e
 
 ```
 src/app/(integrador)/layout.tsx        # Sidebar/Topbar (desktop) + MobileHeader/BottomNav (mobile)
-src/app/(integrador)/dashboard/page.tsx # KPI row + tabela (desktop) ou busca + ClientCard list (mobile)
+src/app/(integrador)/dashboard/page.tsx # KPI row + <ClientsPanel/>
+src/app/(integrador)/clientes/page.tsx  # Só <ClientsPanel/>, sem KPIs — destino do link "Clientes"
+src/app/(integrador)/portais/page.tsx   # Lista de links de portal por cliente (<PortalLinkRow/>)
+src/app/(integrador)/configuracoes/page.tsx # Perfil do integrador logado + "Sair"
 src/components/layout/Sidebar.tsx       # Navegação lateral (220px) + rodapé do usuário — hidden < md
 src/components/layout/Topbar.tsx        # Saudação + botão "Novo cliente" (68px) — hidden < md
 src/components/layout/MobileHeader.tsx  # Logo + notificação + avatar (56px) — hidden >= md
 src/components/layout/BottomNav.tsx     # 4 abas fixas no rodapé — hidden >= md
 src/components/layout/nav-icons.tsx     # Ícones SVG compartilhados por Sidebar e BottomNav
+src/components/dashboard/ClientsPanel.tsx # Busca + filtro + tabela/cards de clientes (usado no Painel e em /clientes)
 src/components/ui/ClientTableRow.tsx    # Linha da tabela desktop (spec §3 <ClientTableRow>)
 src/components/ui/ClientCard.tsx        # Card da lista mobile (spec §3 <ClientCard>)
 src/components/ui/Modal.tsx             # Shell genérico de modal (overlay + rounded-modal)
 src/components/dashboard/NewClientModal.tsx # Botão "+ Novo cliente" + modal de cadastro (Convex)
 src/components/dashboard/EditClientModal.tsx # Modal de edição, aberto pelo "···" da tabela/card
+src/components/dashboard/PortalLinkRow.tsx # Linha de /portais: nome, cidade, abrir/copiar link do portal
 src/lib/data/useClients.ts              # Hook: lista de clientes do tenant logado
 src/lib/data/useKpis.ts                 # Hook: KPIs agregados do tenant logado
-src/lib/data/useCurrentProfile.ts       # Hook: nome/e-mail do integrador logado (saudação)
+src/lib/data/useCurrentProfile.ts       # Hook: nome/e-mail do integrador logado (saudação, /configuracoes)
 src/lib/data/usePlantMutations.ts       # Hooks: criar/editar cliente
 src/lib/mock-data.ts                    # Só os TIPOS (Client, DashboardKpis) — arrays não são mais usados aqui
 src/lib/avatar.ts                       # Iniciais + gradiente determinístico por nome
@@ -57,12 +62,29 @@ escopados ao tenant autenticado — **não** mais os arrays de
 - **Paginação continua decorativa**, mas o rodapé mostra a contagem real
   (`Mostrando <filtrados> de <total>`) — os botões "Anterior"/"Próxima"
   seguem sem função porque tudo cabe numa página só neste volume de dados.
-- **Navegação lateral parcial.** Apenas "Painel" (`/dashboard`) é um link
-  funcional. "Clientes", "Portais" e "Configurações" aparecem no design mas
-  suas rotas ainda não existem — foram renderizados como itens desabilitados
-  (`aria-disabled`, sem `href`) em vez de linkar para páginas 404. Ao criar
-  cada rota, trocar o item correspondente em `src/components/layout/Sidebar.tsx`
-  de `<span>` para `<Link>` (remover a flag `disabled`).
+- **Navegação lateral e inferior 100% funcional.** "Painel", "Clientes",
+  "Portais" e "Configurações"/"Conta" são todos `<Link>` de verdade — a
+  flag `disabled` de `NavItem`/`TabItem` continua existindo em
+  `Sidebar.tsx`/`BottomNav.tsx` só como mecanismo genérico pra uma futura
+  rota ainda não pronta, não porque algo esteja desabilitado hoje. O rótulo
+  "Conta" do `BottomNav` (mobile) e "Configurações" da `Sidebar` (desktop)
+  apontam pra mesma rota `/configuracoes` — não existem duas telas
+  diferentes, só dois rótulos pro mesmo destino (o `BottomNav` segue o nome
+  do §bottom nav do `DESIGN.md`).
+- **`ClientsPanel` foi extraído do dashboard** (`src/components/dashboard/
+  ClientsPanel.tsx`) pra ser reaproveitado sem duplicar ~150 linhas de JSX:
+  o Painel (`/dashboard`) mostra os KPIs + esse painel; `/clientes` mostra
+  só o painel, em tela cheia, pra quem quer ir direto pra gestão de
+  clientes. Busca/filtro/paginação-decorativa continuam exatamente como
+  descrito abaixo, agora dentro do componente extraído.
+- **`/portais` é uma lista simples**, um `PortalLinkRow` por cliente
+  (nome, cidade, link do portal, "Abrir"/"Copiar") — não tem busca nem
+  filtro (o volume de clientes hoje não justifica). Reaproveita o mesmo
+  padrão de cópia via `navigator.clipboard` do `ClientCard`.
+- **`/configuracoes` mostra o perfil do integrador logado** (nome, e-mail,
+  papel) via `useCurrentProfile()` + botão "Sair" (mesmo `signOut()` do
+  menu da Sidebar). Não tem edição de perfil, troca de senha nem
+  preferências ainda — é intencionalmente mínimo, ver "Próximos passos".
 - **Saudação da Topbar é estática**, não baseada em horário do dia (`Bom
   dia`/`Boa tarde`), para evitar prender o texto ao horário de build em uma
   página estática. Se a página passar a ser dinâmica (com dados de sessão),
@@ -102,9 +124,8 @@ escopados ao tenant autenticado — **não** mais os arrays de
 - **Busca mobile também é só visual** (mesmo padrão da busca desktop), e o
   botão "Copiar link" do `ClientCard` usa `navigator.clipboard` — só funciona
   em contexto seguro (HTTPS/localhost) e falha silenciosamente caso contrário.
-- **Abas "Clientes", "Portais" e "Conta" do `BottomNav` estão desabilitadas**
-  pelo mesmo motivo dos itens equivalentes da Sidebar (rotas ainda não
-  existem); só "Painel" navega de verdade.
+- **As 4 abas do `BottomNav` navegam de verdade**, incluindo "Conta" →
+  `/configuracoes` (ver acima).
 - **KPICard ganhou tipografia/padding responsivos** (`text-xl` → `sm:text-[34px]`)
   para caber em 3 colunas numa tela de 390px, conforme §4.4. Isso é a mesma
   instância do componente usada no desktop — não existe uma variante "KPICard
@@ -117,11 +138,11 @@ escopados ao tenant autenticado — **não** mais os arrays de
       ficar grande demais pra filtrar no client.
 - [ ] Editar `name` (usina), `status` e `alert` pela UI — `EditClientModal`
       só cobre `ownerName`/`city`/`capacityKwp` hoje.
-- [ ] Página `/clientes`, `/portais`, `/configuracoes`/`/conta` e ativar os
-      links correspondentes na Sidebar e no BottomNav.
-- [ ] Testes de componentes React (`ui/`) e de integração da página do
-      dashboard — hoje a cobertura automatizada é do backend (Convex) e dos
-      utilitários puros, ver `docs/testing.md`.
+- [ ] `/configuracoes` ainda não permite editar nome/e-mail/senha — só
+      mostra os dados e desloga.
+- [ ] Testes de integração de página (ex: `/dashboard`, `/clientes`
+      renderizando com Convex mockado de ponta a ponta) — hoje a cobertura
+      automatizada testa os componentes isoladamente, ver `docs/testing.md`.
 - [ ] Verificar visualmente em viewport real de ~390px (a verificação nesta
       etapa foi via build + inspeção do HTML server-rendered; o ambiente de
       automação usado não conseguiu forçar uma janela de navegador abaixo de
