@@ -1,16 +1,20 @@
 "use client";
 
+import { useState } from "react";
 import { KPICard } from "@/components/ui/KPICard";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ClientTableRow } from "@/components/ui/ClientTableRow";
 import { ClientCard } from "@/components/ui/ClientCard";
+import { EditClientModal } from "@/components/dashboard/EditClientModal";
 import { useClients } from "@/lib/data/useClients";
 import { useKpis } from "@/lib/data/useKpis";
+import type { Client } from "@/lib/mock-data";
 
 export default function DashboardPage() {
   const clients = useClients();
   const kpis = useKpis();
+  const [editingClient, setEditingClient] = useState<Client | null>(null);
 
   const isLoading = clients === undefined || kpis === undefined;
 
@@ -61,6 +65,7 @@ export default function DashboardPage() {
               status={client.status}
               alert={client.alert}
               portalHref={client.slug ? `/c/${client.slug}` : undefined}
+              onEdit={() => setEditingClient(client)}
             />
           ))}
       </section>
@@ -122,6 +127,7 @@ export default function DashboardPage() {
                     generationKwh={client.generationKwh}
                     status={client.status}
                     portalHref={client.slug ? `/c/${client.slug}` : undefined}
+                    onEdit={() => setEditingClient(client)}
                   />
                 ))}
             </tbody>
@@ -142,6 +148,8 @@ export default function DashboardPage() {
           </div>
         </div>
       </section>
+
+      <EditClientModal client={editingClient} onClose={() => setEditingClient(null)} />
     </div>
   );
 }

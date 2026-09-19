@@ -55,10 +55,10 @@ detalhe/premissa original quando existir.
 
 - [x] Login real + proteção de rota no grupo `(integrador)`.
 - [x] "Novo cliente" persiste de verdade (Convex).
+- [x] Editar cliente — o "···" da tabela/card abre `EditClientModal`
+      (`ownerName`/`city`/`capacityKwp`), ver `docs/dashboard-integrador.md`.
 - [ ] Busca, filtro e paginação reais na tabela de clientes (hoje são só
       visuais — a paginação já mostra a contagem real, mas não pagina).
-- [ ] Menu "···" sem ação — a mutation `plants.update` já existe e está
-      testada (`docs/backend-convex.md`), só falta ligar a uma UI de edição.
 - [ ] Rotas `/clientes`, `/portais`, `/configuracoes`/`/conta` — hoje os
       itens da Sidebar e do BottomNav apontam pra elas mas estão
       desabilitados por não existirem.

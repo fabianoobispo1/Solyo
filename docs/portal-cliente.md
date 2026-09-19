@@ -93,8 +93,6 @@ Cada "seed" em `mock-portal.ts` tem um `integratorSlug` que resolve, via
       aposentar `/portal/[slug]`.
 - [ ] Validar com design se o portal precisa de um mockup mobile dedicado
       (hoje é só uma versão responsiva da página web, ver premissa acima).
-- [ ] Conectar o menu "···" do dashboard a um fluxo de edição do cliente
-      (`docs/dashboard-integrador.md`).
 - [ ] `generateMetadata` para `/c/[token]` (hoje só existe em
       `/portal/[slug]`, porque `/c/[token]` precisou virar Client Component
       para usar o hook do Convex) — exigiria separar em Server wrapper +

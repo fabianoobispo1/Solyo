@@ -190,14 +190,11 @@ UI não precisou mudar, só a fonte dos dados.
   `useClients()`).
 - O modal "Novo cliente" não tem campo para o nome da usina — usa
   `Usina de ${ownerName}` como padrão (ver `NewClientModal`).
-- O menu "···" da tabela/cards ainda não abre nada. A mutation
-  `plants.update` já existe e está testada, só não foi conectada a uma UI
-  de edição nesta etapa.
+- O "···" da tabela/cards abre `EditClientModal`, que usa `plants.update` —
+  ver `docs/dashboard-integrador.md`.
 
 ## Próximos passos (fora do escopo desta etapa)
 
-- [ ] Conectar o menu "···" a um fluxo de edição (reaproveitando
-      `NewClientModal` em modo edição + `useUpdatePlant`).
 - [ ] Busca/filtro/paginação reais no dashboard.
 - [ ] Guardar uma cor/logo por tenant e aplicar em `/c/[token]` (ou
       descontinuar `/portal/[slug]` quando isso existir).

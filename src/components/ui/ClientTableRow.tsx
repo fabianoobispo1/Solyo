@@ -12,6 +12,7 @@ export interface ClientTableRowProps {
   status: StatusKind;
   /** /portal/[slug] do cliente. Sem valor, o link "Ver portal" aparece desabilitado. */
   portalHref?: string;
+  onEdit?: () => void;
 }
 
 export function ClientTableRow({
@@ -22,6 +23,7 @@ export function ClientTableRow({
   generationKwh,
   status,
   portalHref,
+  onEdit,
 }: ClientTableRowProps) {
   const isAlertRow = status === "alert";
 
@@ -84,7 +86,8 @@ export function ClientTableRow({
           )}
           <button
             type="button"
-            aria-label="Mais ações"
+            onClick={onEdit}
+            aria-label="Editar cliente"
             className="flex h-[30px] w-[30px] items-center justify-center rounded-btn-sm text-neutral-secondary hover:bg-neutral-bg"
           >
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none">

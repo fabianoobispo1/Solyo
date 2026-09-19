@@ -17,6 +17,7 @@ src/components/ui/ClientTableRow.tsx    # Linha da tabela desktop (spec §3 <Cli
 src/components/ui/ClientCard.tsx        # Card da lista mobile (spec §3 <ClientCard>)
 src/components/ui/Modal.tsx             # Shell genérico de modal (overlay + rounded-modal)
 src/components/dashboard/NewClientModal.tsx # Botão "+ Novo cliente" + modal de cadastro (Convex)
+src/components/dashboard/EditClientModal.tsx # Modal de edição, aberto pelo "···" da tabela/card
 src/lib/data/useClients.ts              # Hook: lista de clientes do tenant logado
 src/lib/data/useKpis.ts                 # Hook: KPIs agregados do tenant logado
 src/lib/data/useCurrentProfile.ts       # Hook: nome/e-mail do integrador logado (saudação)
@@ -65,8 +66,13 @@ escopados ao tenant autenticado — **não** mais os arrays de
 - **"Ver portal" linka para `/c/[portalToken]`** (a rota pública real, ver
   `docs/portal-cliente.md`) — todo `plant` criado por este dashboard já tem
   um `portalToken`, então o link sempre fica ativo para clientes cadastrados
-  por aqui. O menu "···" ainda não tem handler — é um placeholder visual
-  (a mutation de edição já existe e está testada, ver `docs/backend-convex.md`).
+  por aqui.
+- **O "···" da tabela/card abre `EditClientModal`** (`src/components/
+  dashboard/EditClientModal.tsx`), que edita `ownerName`/`city`/`capacityKwp`
+  via `useUpdatePlant` — mesmos três campos do "Novo cliente", por
+  consistência visual. Não dá pra editar `name` (nome da usina), `status`
+  nem `alert` por essa UI ainda, embora a mutation `plants.update` já
+  suporte isso.
 - **Ícones da sidebar são SVGs escritos à mão**, sem dependência de ícones
   externa, seguindo a mesma linha do `BarChart` inline citado no `DESIGN.md`
   (§4 "sem lib externa para o MVP").
@@ -100,8 +106,8 @@ escopados ao tenant autenticado — **não** mais os arrays de
 ## Próximos passos (fora do escopo desta etapa)
 
 - [ ] Tornar busca, filtro e paginação da tabela funcionais.
-- [ ] Conectar o menu "···" a um fluxo de edição (`useUpdatePlant` já existe
-      e está testado — falta só a UI).
+- [ ] Editar `name` (usina), `status` e `alert` pela UI — `EditClientModal`
+      só cobre `ownerName`/`city`/`capacityKwp` hoje.
 - [ ] Página `/clientes`, `/portais`, `/configuracoes`/`/conta` e ativar os
       links correspondentes na Sidebar e no BottomNav.
 - [ ] Testes de componentes React (`ui/`) e de integração da página do

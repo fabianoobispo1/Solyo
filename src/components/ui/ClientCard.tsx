@@ -15,6 +15,7 @@ export interface ClientCardProps {
   alert?: string;
   /** /portal/[slug] do cliente. Sem valor, as ações ficam desabilitadas. */
   portalHref?: string;
+  onEdit?: () => void;
 }
 
 const statusLabel: Record<StatusKind, string> = {
@@ -24,7 +25,16 @@ const statusLabel: Record<StatusKind, string> = {
   inactive: "Inativo",
 };
 
-export function ClientCard({ name, city, kwp, generation, status, alert, portalHref }: ClientCardProps) {
+export function ClientCard({
+  name,
+  city,
+  kwp,
+  generation,
+  status,
+  alert,
+  portalHref,
+  onEdit,
+}: ClientCardProps) {
   const [copied, setCopied] = useState(false);
 
   async function handleCopyLink() {
@@ -106,6 +116,18 @@ export function ClientCard({ name, city, kwp, generation, status, alert, portalH
               <path d="M3 10.5V4a1 1 0 0 1 1-1h6.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
             </svg>
           )}
+        </button>
+        <button
+          type="button"
+          onClick={onEdit}
+          aria-label="Editar cliente"
+          className="flex h-9 w-9 items-center justify-center rounded-btn border border-neutral-border text-neutral-secondary"
+        >
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+            <circle cx="3" cy="8" r="1.4" fill="currentColor" />
+            <circle cx="8" cy="8" r="1.4" fill="currentColor" />
+            <circle cx="13" cy="8" r="1.4" fill="currentColor" />
+          </svg>
         </button>
       </div>
     </div>
