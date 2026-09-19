@@ -35,6 +35,8 @@ convex/lib/generation.test.ts
 convex/lib/tenant.test.ts
 convex/plants.test.ts
 convex/invites.test.ts
+src/components/dashboard/NewClientModal.test.tsx
+src/components/dashboard/EditClientModal.test.tsx
 ```
 
 - **Função pura sem dependência de banco/auth** (helpers em `src/lib/*` e
@@ -127,16 +129,24 @@ Se a função for pública de propósito (como `getByToken`, usada por
 exige login e que só devolve dados daquele único recurso, nunca de outros
 do mesmo tenant.
 
+## Testando componentes que dependem do Convex
+
+`NewClientModal`/`EditClientModal` (em `src/components/dashboard/`) usam os
+hooks de `src/lib/data/usePlantMutations.ts` (`useCreatePlant`/
+`useUpdatePlant`), que por sua vez chamam `useMutation` do Convex. Em vez de
+mockar `convex/react` diretamente, mocka-se o módulo wrapper com
+`vi.mock("@/lib/data/usePlantMutations", () => ({ useCreatePlant: vi.fn() }))`
+e `vi.mocked(useCreatePlant).mockReturnValue(fn)` — mais simples e testa
+exatamente o contrato que o componente realmente usa. Ver
+`NewClientModal.test.tsx`/`EditClientModal.test.tsx`.
+
 ## O que não está coberto ainda
 
-- **Componentes que dependem do Convex** (`NewClientModal`/
-  `EditClientModal`, tudo em `src/components/dashboard/`) — testá-los exige
-  mockar `useQuery`/`useMutation`/`useAuthActions`, o que essa etapa não
-  cobriu. Todos os componentes puramente apresentacionais de
-  `src/components/ui/` (Button, StatusBadge, Input, Modal, KPICard,
-  SolvoLogo, ClientTableRow, ClientCard) já têm teste.
+- Todos os componentes de `src/components/ui/` e `src/components/dashboard/`
+  já têm teste.
 - `src/lib/data/*` (os hooks) — são wrappers finos de `useQuery`/`useMutation`
-  do Convex; a cobertura real está nas funções Convex por trás deles.
+  do Convex; a cobertura real está nas funções Convex por trás deles (e,
+  para os componentes que os consomem, no mock desses hooks — ver acima).
 - Rotas Next inteiras (`src/app/**`) — sem teste de integração/E2E (ex:
   Playwright). A verificação end-to-end até aqui foi manual via browser
   (login real + criar cliente + abrir `/c/[token]`, documentado no

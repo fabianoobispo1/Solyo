@@ -87,14 +87,16 @@ detalhe/premissa original quando existir.
 
 - [ ] Deploy contínuo (Vercel) com preview por PR.
 - [x] Testes automatizados do backend (Convex — isolamento entre tenants,
-      cálculo de geração/economia), de utilitários puros (`src/lib`) e de
+      cálculo de geração/economia), de utilitários puros (`src/lib`), de
       **todos** os componentes apresentacionais de `src/components/ui/`
       (Vitest + Testing Library — Button, StatusBadge, Input, `Modal`
       (trap de foco/Tab/Escape), KPICard, SolvoLogo, ClientTableRow,
-      ClientCard). Ver `docs/testing.md`. 94 testes no total.
-- [ ] Testes dos componentes que dependem do Convex
-      (`src/components/dashboard/`) e E2E de fluxo completo (ex:
-      Playwright) — lacuna consciente, ver `docs/testing.md`.
+      ClientCard) e dos componentes de `src/components/dashboard/` que
+      dependem do Convex (`NewClientModal`/`EditClientModal`, mockando
+      `useCreatePlant`/`useUpdatePlant`). Ver `docs/testing.md`. 104 testes
+      no total.
+- [ ] E2E de fluxo completo (ex: Playwright) — lacuna consciente, ver
+      `docs/testing.md`.
 - [ ] Observabilidade (erros, analytics de uso do portal).
 - [x] Revisão de segurança do portal público — login já tem rate limiting
       (nativo do Convex Auth) e tokens são inviáveis de enumerar (128 bits);
