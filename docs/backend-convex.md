@@ -9,15 +9,16 @@ uma tabela `tenants` separada — o próprio `profile` do integrador (role
 ## Estrutura de arquivos
 
 ```
-convex/schema.ts          # profiles, plants, readings/tariffs (sem uso ainda)
+convex/schema.ts          # profiles, plants, invites, readings/tariffs (sem uso ainda)
 convex/auth.config.ts     # domain do Convex Auth
 convex/auth.ts            # Password provider + callback que cria o profile
 convex/http.ts            # rotas HTTP do Convex Auth
 convex/lib/tenant.ts      # requireUser / requireTenant / assertRole / assertSameTenant
-convex/lib/tokens.ts      # generatePortalToken
+convex/lib/tokens.ts      # generateToken (usado por portalToken e por invites)
 convex/lib/generation.ts  # geração/economia/CO2 mock a partir de capacityKwp
 convex/plants.ts          # list / get / kpis / create / update / getByToken
 convex/profiles.ts        # me (perfil do usuário logado)
+convex/invites.ts         # create (CLI) / getStatus / accept — criação de conta por convite, ver docs/login.md
 convex/seed.ts            # seedDemoTenant — cria "Aurora Solar" + 4 clientes de MG
 
 src/components/ConvexClientProvider.tsx  # ConvexAuthProvider (client-side, sem SSR)
@@ -129,6 +130,9 @@ exemplo, um de produção), vai precisar repetir esse passo lá também.
 - **`readings` / `tariffs`** — existem no schema propositalmente **sem
   uso**. Geração/economia/CO₂ são calculadas a partir de `capacityKwp`
   (`convex/lib/generation.ts`), não de telemetria real de inversor.
+- **`invites`** — convite de uso único (7 dias) que vira uma conta
+  `integrador_admin` em `/convite/[token]`. Ver `docs/login.md` para como
+  gerar um e para as premissas/bugs encontrados nesse fluxo.
 
 ## Isolamento entre tenants
 

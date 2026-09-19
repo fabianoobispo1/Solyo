@@ -1,51 +1,101 @@
-# Login (`/login`)
+# Autenticação (`/login` e `/convite/[token]`)
 
-Implementação do layout descrito em `DESIGN.md` §4.1 (Login — Web). Esse
-item não estava no checklist original do `DESIGN.md` (§6) — foi identificado
-como lacuna ao comparar a implementação com os mockups de referência e
-adicionado ao `docs/roadmap.md`. **Autentica de verdade** desde a integração
-com Convex Auth — ver `docs/backend-convex.md`.
+`/login` implementa o layout descrito em `DESIGN.md` §4.1 (Login — Web) —
+item que não estava no checklist original do `DESIGN.md` (§6), identificado
+como lacuna e adicionado ao `docs/roadmap.md`. `/convite/[token]` é a tela
+de criação de conta, no modelo "convite por link" (ver decisão em
+`docs/roadmap.md`). Ambas **autenticam/criam conta de verdade** via Convex
+Auth — ver `docs/backend-convex.md`.
 
 ## Estrutura de arquivos
 
 ```
-src/app/login/page.tsx   # Painel de marca (dark) + painel de formulário (branco)
+src/components/auth/AuthShell.tsx   # Painel de marca (dark, compartilhado pelas duas telas)
+src/app/login/page.tsx              # Formulário de login
+src/app/convite/[token]/page.tsx    # Formulário de criação de conta a partir de um convite
+convex/invites.ts                   # create (CLI) / getStatus (pública) / accept (pública)
 ```
 
-Rota pública, fora do grupo `(integrador)` e fora de `portal/`/`c/`. Usa
-apenas o `layout.tsx` raiz (fontes globais + `ConvexClientProvider`).
+Ambas as rotas são públicas, fora do grupo `(integrador)`. Usam só o
+`layout.tsx` raiz (fontes globais + `ConvexClientProvider`).
 
-## Como funciona
+## Como o login funciona
 
-`LoginForm` (dentro do próprio `page.tsx`) é um Client Component que chama
-`useAuthActions().signIn("password", formData)` do `@convex-dev/auth/react`,
-com `flow: "signIn"`. Em caso de sucesso, `router.push("/dashboard")`; em
-caso de erro, mostra "E-mail ou senha incorretos." no campo de senha
-(reaproveitando a prop `error` que `<Input>` já suportava). Não há signup
-pela UI — contas de integrador são criadas via seed/console do Convex neste
-MVP (ver credenciais de demonstração em `docs/backend-convex.md`).
+`LoginForm` (dentro de `login/page.tsx`) chama
+`useAuthActions().signIn("password", formData)` com `flow: "signIn"`. Em
+caso de sucesso, navega pra `/dashboard`; em erro, mostra "E-mail ou senha
+incorretos." (mensagem genérica de propósito — evita enumeração de contas).
+
+## Como a criação de conta por convite funciona
+
+Não existe UI/admin panel pra gerar convite — só o time da Solyo, via CLI:
+
+```
+npx convex run invites:create '{"email":"prospect@empresa.com"}'
+```
+
+Isso devolve um `token`; o link é `<origem>/convite/<token>` (7 dias de
+validade, uso único). Quem abre o link vê um formulário com o e-mail travado
+(vem do convite) + nome + senha. Ao enviar, `convite/[token]/page.tsx`:
+
+1. Chama a action `invites.accept` (pública, valida o convite, cria a conta
+   via `createAccount` do Convex Auth — o que dispara o callback em
+   `convex/auth.ts` que cria o `profile` — e marca o convite como usado).
+2. Encerra qualquer sessão anterior do navegador (`signOut()`).
+3. Faz `signIn("password", ...)` com as credenciais recém-criadas.
+4. Espera o estado reativo `useConvexAuth().isAuthenticated` confirmar a
+   sessão nova antes de navegar pra `/dashboard`.
+
+Os passos 2–4 existem por causa de dois bugs encontrados testando esse
+fluxo manualmente (ver premissas abaixo) — não são só estilo de código.
 
 ## Premissas assumidas nesta implementação
 
 - **Só e-mail/senha.** O botão "Continuar com Google" continua `disabled`,
   puramente visual — não há provider OAuth configurado em `convex/auth.ts`.
-- **Sem tela de cadastro.** "Fale com a Solyo" continua um texto não
-  clicável (com `title` de tooltip) — o produto ainda não definiu um canal
-  de contato nem se o cadastro será self-serve.
-- **Textos de marketing (tagline, estatísticas +2.400/98%/R$4M) continuam
-  placeholders** copiados da estrutura do `DESIGN.md` — não são números
-  reais de produto, precisam ser validados/atualizados pelo time antes de ir
-  ao ar.
-- **Erro de login é genérico** ("E-mail ou senha incorretos.") — não
-  distingue "e-mail não existe" de "senha errada", de propósito (evita
-  enumeração de contas).
+- **Convites são token-only, sem UI de admin.** Só dá pra criar um via CLI
+  (`npx convex run invites:create`). O e-mail do convite fica travado no
+  formulário (`<Input value={email} disabled readOnly>`), mas isso é só
+  cosmético — a action `accept` sempre usa o e-mail gravado no convite, não
+  um valor vindo do form, então não tem como burlar isso.
+- **Convite expira em 7 dias e é de uso único** (`convex/invites.ts` —
+  `INVITE_TTL_MS`), sem forma de reenviar/renovar pela UI ainda.
+- **Se o navegador já tinha uma sessão de outra conta, `signOut()` roda
+  antes do `signIn`** tanto no login quanto no convite. Sem isso, entrar
+  numa segunda conta no mesmo navegador (ex: testar dois convites seguidos)
+  ficava "preso" na sessão antiga mesmo depois do login/cadastro ter
+  funcionado do lado do servidor.
+- **Navegar pra `/dashboard` espera `isAuthenticated` virar `true`** (efeito
+  reativo), em vez de um `router.push` logo após o `signIn` resolver. Sem
+  isso, o guard do layout `(integrador)` às vezes rodava antes do estado de
+  auth propagar e mandava de volta pro `/login` — mesmo com o login/cadastro
+  tendo funcionado.
+- **Em `/convite/[token]`, a resposta de `getStatus` é "congelada" na
+  primeira leitura** (`useState` + set condicional durante o render, não em
+  efeito — é o padrão que o React recomenda pra isso). Como `getStatus` é
+  uma query reativa, sem congelar ela atualizaria pra "convite já usado" no
+  meio do próprio fluxo de aceitar o convite (o `accept` marca o convite
+  como usado como parte do sucesso), desmontando o formulário antes do
+  `signIn` terminar.
+- **Menu "Sair" na Sidebar** (`src/components/layout/Sidebar.tsx`) chama
+  `signOut()` e navega pra `/login` — antes deste trabalho não existia
+  nenhuma forma de encerrar sessão na UI.
+- **Erro de login/cadastro é genérico**, de propósito (evita enumeração de
+  contas/convites).
+- **Textos de marketing no `AuthShell`** (tagline, estatísticas
+  +2.400/98%/R$4M) continuam placeholders copiados da estrutura do
+  `DESIGN.md` — precisam ser validados pelo time antes de ir ao ar.
 
 ## Próximos passos (fora do escopo desta etapa)
 
-- [ ] Cadastro self-serve de integrador (hoje só existe via seed/console do
-      Convex).
+- [ ] Admin panel (ou pelo menos um comando mais amigável) pra gerar
+      convites, em vez de exigir `npx convex run` direto.
+- [ ] Reenvio/renovação de convite expirado sem precisar gerar um novo token
+      manualmente.
 - [ ] Login social (Google) se o produto decidir oferecer.
 - [ ] Validação de formulário mais rica (força de senha, feedback inline
       antes do submit).
-- [ ] Definir o canal real de "Fale com a Solyo" e trocar o texto por um link.
-- [ ] Confirmar com produto/marketing os números da coluna de estatísticas.
+- [ ] Definir o canal real de "Fale com a Solyo" no `/login` e trocar o
+      texto por um link.
+- [ ] Confirmar com produto/marketing os números da coluna de estatísticas
+      do `AuthShell`.

@@ -14,7 +14,9 @@ detalhe/premissa original quando existir.
 - Tokens, fontes e componentes base (`Button`, `StatusBadge`, `Input`,
   `KPICard`, `SolvoLogo`, `ClientTableRow`, `ClientCard`, `BarChart`, `Modal`).
 - Login (`/login`) — **autentica de verdade** via Convex Auth (Password),
-  só para o integrador. Ver `docs/login.md` e `docs/backend-convex.md`.
+  só para o integrador. Criação de conta é por convite
+  (`/convite/[token]`, gerado via CLI) — ver `docs/login.md` e
+  `docs/backend-convex.md`.
 - Dashboard do integrador (`/dashboard`) responsivo (desktop + mobile),
   **dados reais** via Convex (`useClients`/`useKpis`), protegido por login
   (redireciona pra `/login` se não autenticado). "Novo cliente" já persiste
@@ -67,7 +69,9 @@ detalhe/premissa original quando existir.
       `ClientPortalData` em `src/lib/mock-data.ts`/`mock-portal.ts` — os
       hooks reais em `src/lib/data/` devolvem exatamente esses shapes).
 - [x] Autenticação do integrador (Convex Auth, só e-mail/senha) + proteção
-      de rota no grupo `(integrador)`.
+      de rota no grupo `(integrador)` + logout (menu da Sidebar).
+- [x] Criação de conta de integrador via convite (`/convite/[token]`,
+      gerado por CLI) — ver `docs/login.md`.
 - [x] Portal do cliente final decidido como **sem login** — acesso via
       `portalToken` não-adivinhável em `/c/[token]`.
 - [x] `mock-data.ts`/`mock-portal.ts` substituídos por Convex nas rotas

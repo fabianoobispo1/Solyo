@@ -1,98 +1,69 @@
 "use client";
 
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { useConvexAuth } from "convex/react";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { SolvoLogo } from "@/components/ui/SolvoLogo";
+import { AuthShell } from "@/components/auth/AuthShell";
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
-      <section
-        className="relative flex w-full flex-col justify-between gap-10 overflow-hidden px-10 py-12 text-white lg:w-[560px] lg:shrink-0"
-        style={{
-          background: "linear-gradient(155deg, #081E14 0%, #0C5A46 50%, #062E22 100%)",
-        }}
-      >
-        <GridTexture />
-        <div
-          className="pointer-events-none absolute -right-20 -top-20 h-72 w-72 rounded-full blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(242,164,34,0.35), transparent 70%)" }}
-        />
-        <div
-          className="pointer-events-none absolute -bottom-24 -left-20 h-80 w-80 rounded-full blur-3xl"
-          style={{ background: "radial-gradient(circle, rgba(12,90,70,0.55), transparent 70%)" }}
-        />
+    <AuthShell>
+      <div className="flex flex-col gap-2">
+        <h1 className="font-display text-2xl font-bold tracking-[-0.6px] text-neutral-heading">
+          Bem-vindo(a) de volta
+        </h1>
+        <p className="font-body text-sm text-neutral-secondary">
+          Entre com sua conta de integrador para acessar o painel.
+        </p>
+      </div>
 
-        <div className="relative z-10 flex flex-col gap-10">
-          <SolvoLogo variant="dark" />
-          <div className="flex flex-col gap-4">
-            <h2 className="font-display text-[40px] font-bold leading-tight tracking-[-1px]">
-              Gerencie sua carteira solar com clareza total
-            </h2>
-            <p className="max-w-sm font-body text-sm text-white/60">
-              Acompanhe geração, economia e alertas de todos os seus clientes
-              em um só painel — e ofereça um portal white-label para cada um
-              deles.
-            </p>
-          </div>
-        </div>
+      <LoginForm />
 
-        <div className="relative z-10 grid grid-cols-3 gap-4 border-t border-white/10 pt-6">
-          <Stat value="+2.400" label="clientes monitorados" />
-          <Stat value="98%" label="uptime de geração" />
-          <Stat value="R$4M" label="economizados" />
-        </div>
-      </section>
+      <div className="flex items-center gap-3 font-body text-xs text-neutral-secondary">
+        <span className="h-px flex-1 bg-neutral-border" />
+        ou
+        <span className="h-px flex-1 bg-neutral-border" />
+      </div>
 
-      <section className="flex w-full flex-1 items-center justify-center bg-neutral-surface px-6 py-16 sm:px-10">
-        <div className="flex w-full max-w-sm flex-col gap-6">
-          <div className="flex flex-col gap-2">
-            <h1 className="font-display text-2xl font-bold tracking-[-0.6px] text-neutral-heading">
-              Bem-vindo(a) de volta
-            </h1>
-            <p className="font-body text-sm text-neutral-secondary">
-              Entre com sua conta de integrador para acessar o painel.
-            </p>
-          </div>
+      <Button variant="neutral" size="lg" type="button" className="w-full gap-2.5" disabled>
+        <GoogleIcon />
+        Continuar com Google
+      </Button>
 
-          <LoginForm />
-
-          <div className="flex items-center gap-3 font-body text-xs text-neutral-secondary">
-            <span className="h-px flex-1 bg-neutral-border" />
-            ou
-            <span className="h-px flex-1 bg-neutral-border" />
-          </div>
-
-          <Button variant="neutral" size="lg" type="button" className="w-full gap-2.5" disabled>
-            <GoogleIcon />
-            Continuar com Google
-          </Button>
-
-          <p className="text-center font-body text-sm text-neutral-secondary">
-            Ainda não tem conta?{" "}
-            <span
-              className="cursor-not-allowed font-medium text-brand-emerald"
-              title="Em breve — canal de contato ainda não definido"
-            >
-              Fale com a Solyo
-            </span>
-          </p>
-        </div>
-      </section>
-    </div>
+      <p className="text-center font-body text-sm text-neutral-secondary">
+        Ainda não tem conta?{" "}
+        <span
+          className="cursor-not-allowed font-medium text-brand-emerald"
+          title="Precisa de um convite — fale com a Solyo"
+        >
+          Fale com a Solyo
+        </span>
+      </p>
+    </AuthShell>
   );
 }
 
 function LoginForm() {
-  const { signIn } = useAuthActions();
+  const { signIn, signOut } = useAuthActions();
+  const { isAuthenticated } = useConvexAuth();
   const router = useRouter();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [awaitingSession, setAwaitingSession] = useState(false);
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  // Só navega quando o estado reativo de auth confirmar a sessão nova —
+  // um router.push logo após o signIn corre na frente disso e o guard do
+  // layout do dashboard manda de volta pro /login.
+  useEffect(() => {
+    if (awaitingSession && isAuthenticated) {
+      router.push("/dashboard");
+    }
+  }, [awaitingSession, isAuthenticated, router]);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setSubmitting(true);
@@ -100,14 +71,16 @@ function LoginForm() {
     const formData = new FormData(event.currentTarget);
     formData.set("flow", "signIn");
 
-    signIn("password", formData)
-      .then(() => {
-        router.push("/dashboard");
-      })
-      .catch(() => {
-        setError("E-mail ou senha incorretos.");
-        setSubmitting(false);
-      });
+    try {
+      // Se o navegador já tinha uma sessão de outra conta, precisa encerrar
+      // antes — senão o signIn não troca pra conta que está entrando agora.
+      await signOut().catch(() => {});
+      await signIn("password", formData);
+      setAwaitingSession(true);
+    } catch {
+      setError("E-mail ou senha incorretos.");
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -133,28 +106,6 @@ function LoginForm() {
         {submitting ? "Entrando…" : "Entrar"}
       </Button>
     </form>
-  );
-}
-
-function Stat({ value, label }: { value: string; label: string }) {
-  return (
-    <div className="flex flex-col gap-1">
-      <span className="font-display text-xl font-bold tracking-[-0.5px]">{value}</span>
-      <span className="font-body text-[11px] text-white/50">{label}</span>
-    </div>
-  );
-}
-
-function GridTexture() {
-  return (
-    <svg className="pointer-events-none absolute inset-0 h-full w-full opacity-[0.06]" aria-hidden="true">
-      <defs>
-        <pattern id="login-grid" width="40" height="40" patternUnits="userSpaceOnUse">
-          <path d="M40 0H0V40" fill="none" stroke="rgba(255,255,255,0.5)" />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#login-grid)" />
-    </svg>
   );
 }
 

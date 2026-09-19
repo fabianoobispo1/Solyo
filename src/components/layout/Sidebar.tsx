@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { ReactNode } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { ReactNode, useState } from "react";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { cn } from "@/lib/cn";
 import { getAvatarGradient, getInitials } from "@/lib/avatar";
 import { SolvoLogo } from "@/components/ui/SolvoLogo";
@@ -53,33 +54,67 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
         <NavLink item={settingsItem} active={pathname === settingsItem.href} />
       </nav>
 
-      <div className="border-t border-neutral-border-md px-3 py-4">
-        <button
-          type="button"
-          className="flex w-full items-center gap-2.5 rounded-btn px-2 py-2 text-left hover:bg-neutral-bg"
-        >
-          <div
-            className={cn(
-              "flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-avatar bg-gradient-to-br font-display text-xs font-semibold text-white",
-              getAvatarGradient(userName)
-            )}
-          >
-            {getInitials(userName)}
-          </div>
-          <div className="flex min-w-0 flex-1 flex-col">
-            <span className="truncate font-body text-sm font-medium text-neutral-heading">
-              {userName}
-            </span>
-            <span className="truncate font-body text-xs text-neutral-secondary">
-              {userRole}
-            </span>
-          </div>
-          <span className="text-neutral-secondary">
-            <ChevronDownIcon />
-          </span>
-        </button>
-      </div>
+      <UserMenu userName={userName} userRole={userRole} />
     </aside>
+  );
+}
+
+function UserMenu({ userName, userRole }: SidebarProps) {
+  const [open, setOpen] = useState(false);
+  const { signOut } = useAuthActions();
+  const router = useRouter();
+
+  async function handleSignOut() {
+    await signOut();
+    router.push("/login");
+  }
+
+  return (
+    <div className="relative border-t border-neutral-border-md px-3 py-4">
+      {open && (
+        <div
+          role="presentation"
+          className="fixed inset-0 z-10"
+          onClick={() => setOpen(false)}
+        />
+      )}
+
+      {open && (
+        <div className="absolute bottom-full left-3 right-3 z-20 mb-1 rounded-btn border border-neutral-border bg-neutral-surface p-1 shadow-lg">
+          <button
+            type="button"
+            onClick={handleSignOut}
+            className="w-full rounded-btn-sm px-3 py-2 text-left font-body text-sm text-neutral-body hover:bg-neutral-bg"
+          >
+            Sair
+          </button>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className="relative z-20 flex w-full items-center gap-2.5 rounded-btn px-2 py-2 text-left hover:bg-neutral-bg"
+      >
+        <div
+          className={cn(
+            "flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-avatar bg-gradient-to-br font-display text-xs font-semibold text-white",
+            getAvatarGradient(userName)
+          )}
+        >
+          {getInitials(userName)}
+        </div>
+        <div className="flex min-w-0 flex-1 flex-col">
+          <span className="truncate font-body text-sm font-medium text-neutral-heading">
+            {userName}
+          </span>
+          <span className="truncate font-body text-xs text-neutral-secondary">{userRole}</span>
+        </div>
+        <span className="text-neutral-secondary">
+          <ChevronDownIcon />
+        </span>
+      </button>
+    </div>
   );
 }
 

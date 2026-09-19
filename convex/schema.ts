@@ -59,4 +59,16 @@ export default defineSchema({
     pricePerKwh: v.number(),
     updatedAt: v.number(),
   }).index("by_tenant", ["tenantId"]),
+
+  // Convite pra um novo integrador criar a própria conta em /convite/[token]
+  // (ver convex/invites.ts). Criado só via CLI (`npx convex run
+  // invites:create`) — não existe UI/admin panel pra gerar convite ainda.
+  invites: defineTable({
+    email: v.string(),
+    token: v.string(),
+    createdAt: v.number(),
+    expiresAt: v.number(),
+    usedAt: v.optional(v.number()),
+    usedByProfileId: v.optional(v.id("profiles")),
+  }).index("by_token", ["token"]),
 });

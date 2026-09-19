@@ -25,6 +25,7 @@ src/lib/avatar.test.ts
 convex/lib/generation.test.ts
 convex/lib/tenant.test.ts
 convex/plants.test.ts
+convex/invites.test.ts
 ```
 
 - **Função pura sem dependência de banco/auth** (helpers em `src/lib/*` e
@@ -52,6 +53,13 @@ de teste, e use `t.withIdentity({ subject: "<userId>|qualquer-coisa" })` —
 `getAuthUserId` em `convex/lib/tenant.ts` espera encontrar no token. Veja o
 helper `createIntegrador` no topo de `convex/plants.test.ts`; reaproveite-o
 em vez de duplicar esse setup em novos arquivos de teste.
+
+`t.query`/`t.mutation` chamam funções públicas; `internal.<modulo>.<nome>`
+chama `internalQuery`/`internalMutation` (não expostas em `api`) — usado em
+`convex/invites.test.ts` pra criar o convite direto, sem passar pela CLI.
+Pra testar uma `action` (que não acessa `ctx.db` diretamente, só via
+`ctx.runQuery`/`ctx.runMutation`), use `t.action(api.<modulo>.<nome>, args)`
+— ver `convex/invites.test.ts` testando `invites.accept`.
 
 ## O que é obrigatório testar ao mexer em `convex/plants.ts` (ou schema)
 

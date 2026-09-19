@@ -10,6 +10,7 @@
 
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
+import type * as invites from "../invites.js";
 import type * as lib_generation from "../lib/generation.js";
 import type * as lib_tenant from "../lib/tenant.js";
 import type * as lib_tokens from "../lib/tokens.js";
@@ -26,6 +27,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   auth: typeof auth;
   http: typeof http;
+  invites: typeof invites;
   "lib/generation": typeof lib_generation;
   "lib/tenant": typeof lib_tenant;
   "lib/tokens": typeof lib_tokens;
