@@ -2,12 +2,13 @@ import { KPICard } from "@/components/ui/KPICard";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ClientTableRow } from "@/components/ui/ClientTableRow";
+import { ClientCard } from "@/components/ui/ClientCard";
 import { mockClients, mockDashboardKpis } from "@/lib/mock-data";
 
 export default function DashboardPage() {
   return (
-    <div className="flex flex-col gap-6 p-8">
-      <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
+      <section className="grid grid-cols-3 gap-2.5 sm:gap-4 lg:grid-cols-4">
         <KPICard
           variant="filled"
           label="Geração total (mês)"
@@ -31,7 +32,31 @@ export default function DashboardPage() {
         />
       </section>
 
-      <section className="rounded-card border border-neutral-border bg-neutral-surface">
+      {/* Mobile — lista de cards (DESIGN.md §4.4). Busca e cards são apenas visuais, ver docs/dashboard-integrador.md. */}
+      <section className="flex flex-col gap-3 md:hidden">
+        <div className="relative">
+          <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-secondary">
+            <SearchIcon />
+          </span>
+          <Input placeholder="Buscar cliente..." className="h-10 pl-9" />
+        </div>
+
+        {mockClients.map((client) => (
+          <ClientCard
+            key={client.id}
+            name={client.name}
+            city={client.city}
+            kwp={client.kwp}
+            generation={`${client.generationKwh.toLocaleString("pt-BR")} kWh`}
+            status={client.status}
+            alert={client.alert}
+            portalHref={client.slug ? `/portal/${client.slug}` : undefined}
+          />
+        ))}
+      </section>
+
+      {/* Desktop — tabela (DESIGN.md §4.2) */}
+      <section className="hidden rounded-card border border-neutral-border bg-neutral-surface md:block">
         <div className="flex flex-wrap items-center justify-between gap-3 border-b border-neutral-border-md px-6 py-4">
           <h2 className="font-display text-xl font-bold tracking-[-0.4px] text-neutral-heading">
             Clientes
@@ -100,5 +125,14 @@ export default function DashboardPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <circle cx="7" cy="7" r="4.5" stroke="currentColor" strokeWidth="1.4" />
+      <path d="M13 13l-2.5-2.5" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" />
+    </svg>
   );
 }

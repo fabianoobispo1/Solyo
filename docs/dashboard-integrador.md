@@ -1,15 +1,20 @@
 # Dashboard do Integrador
 
-Implementação do layout descrito em `DESIGN.md` §4.2 (Dashboard — Web).
+Implementação do layout descrito em `DESIGN.md` §4.2 (Dashboard — Web) e
+§4.4 (Mobile — Dashboard).
 
 ## Estrutura de arquivos
 
 ```
-src/app/(integrador)/layout.tsx        # Sidebar + Topbar, envolve todas as rotas do grupo
-src/app/(integrador)/dashboard/page.tsx # KPI row + tabela de clientes
-src/components/layout/Sidebar.tsx       # Navegação lateral (220px) + rodapé do usuário
-src/components/layout/Topbar.tsx        # Saudação + botão "Novo cliente" (68px)
-src/components/ui/ClientTableRow.tsx    # Linha da tabela (spec §3 <ClientTableRow>)
+src/app/(integrador)/layout.tsx        # Sidebar/Topbar (desktop) + MobileHeader/BottomNav (mobile)
+src/app/(integrador)/dashboard/page.tsx # KPI row + tabela (desktop) ou busca + ClientCard list (mobile)
+src/components/layout/Sidebar.tsx       # Navegação lateral (220px) + rodapé do usuário — hidden < md
+src/components/layout/Topbar.tsx        # Saudação + botão "Novo cliente" (68px) — hidden < md
+src/components/layout/MobileHeader.tsx  # Logo + notificação + avatar (56px) — hidden >= md
+src/components/layout/BottomNav.tsx     # 4 abas fixas no rodapé — hidden >= md
+src/components/layout/nav-icons.tsx     # Ícones SVG compartilhados por Sidebar e BottomNav
+src/components/ui/ClientTableRow.tsx    # Linha da tabela desktop (spec §3 <ClientTableRow>)
+src/components/ui/ClientCard.tsx        # Card da lista mobile (spec §3 <ClientCard>)
 src/components/ui/Modal.tsx             # Shell genérico de modal (overlay + rounded-modal)
 src/components/dashboard/NewClientModal.tsx # Botão "+ Novo cliente" + modal de cadastro (mock)
 src/lib/mock-data.ts                    # Dados mocados (clientes + KPIs agregados)
@@ -67,6 +72,23 @@ importam esses arrays diretamente.
   `<input>`. `Modal` (`src/components/ui/Modal.tsx`) é o shell genérico
   (overlay, `Esc` fecha, clique fora fecha) reutilizável para outros modais
   futuros.
+- **Mobile é a mesma rota `/dashboard`, não uma página separada.** A troca
+  entre a composição desktop (Sidebar + Topbar + tabela) e a mobile
+  (MobileHeader + BottomNav + `ClientCard` list) é só CSS — ambas as árvores
+  são renderizadas no servidor e alternadas com `hidden`/`md:flex`/`md:hidden`
+  do Tailwind (breakpoint `md` = 768px). Dá pra confirmar isso vendo o HTML:
+  os dois blocos existem no documento em qualquer largura, só a visibilidade
+  muda.
+- **Busca mobile também é só visual** (mesmo padrão da busca desktop), e o
+  botão "Copiar link" do `ClientCard` usa `navigator.clipboard` — só funciona
+  em contexto seguro (HTTPS/localhost) e falha silenciosamente caso contrário.
+- **Abas "Clientes", "Portais" e "Conta" do `BottomNav` estão desabilitadas**
+  pelo mesmo motivo dos itens equivalentes da Sidebar (rotas ainda não
+  existem); só "Painel" navega de verdade.
+- **KPICard ganhou tipografia/padding responsivos** (`text-xl` → `sm:text-[34px]`)
+  para caber em 3 colunas numa tela de 390px, conforme §4.4. Isso é a mesma
+  instância do componente usada no desktop — não existe uma variante "KPICard
+  mobile" separada.
 
 ## Próximos passos (fora do escopo desta etapa)
 
@@ -77,12 +99,14 @@ importam esses arrays diretamente.
 - [ ] Tornar busca, filtro e paginação da tabela funcionais.
 - [ ] Conectar o submit do `NewClientModal` a uma mutação real (hoje só
       mostra a confirmação mock).
-- [ ] Página `/clientes`, `/portais`, `/configuracoes` e ativar os links
-      correspondentes na Sidebar.
-- [ ] `<ClientCard>` (mobile) — item do checklist do `DESIGN.md` ainda não
-      implementado; reaproveitar `mockClients` para o layout 4.4.
+- [ ] Página `/clientes`, `/portais`, `/configuracoes`/`/conta` e ativar os
+      links correspondentes na Sidebar e no BottomNav.
 - [ ] Testes (unitários dos componentes `ui/` e de integração da página do
-      dashboard).
+      dashboard, incluindo os dois breakpoints).
+- [ ] Verificar visualmente em viewport real de ~390px (a verificação nesta
+      etapa foi via build + inspeção do HTML server-rendered; o ambiente de
+      automação usado não conseguiu forçar uma janela de navegador abaixo de
+      ~800px de largura).
 
 A rota `portal/[slug]` (layout 4.3), o `<BarChart>` inline e o white-label
 mocado (`IntegratorTheme`) já foram implementados — ver

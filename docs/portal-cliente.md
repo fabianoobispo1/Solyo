@@ -56,15 +56,23 @@ o estado real de um cliente que ainda não tem inversor/portal provisionado.
 - **`BarChart` dimensiona o tooltip do dia atual pelo texto**, não por um
   valor fixo, para não cortar valores com mais dígitos (`892 kWh` vs.
   `3.120 kWh`).
+- **Não existe uma composição "mobile" separada do portal** — o `DESIGN.md`
+  não especifica um layout §4.4-like para o portal (só para o dashboard do
+  integrador), então em vez de inventar uma segunda versão, ajustamos a
+  mesma página com breakpoints Tailwind: número da geração (`text-5xl` →
+  `sm:text-[64px]` → `lg:text-[100px]`), padding do header/hero e altura das
+  células da metrics bar encolhem progressivamente; o hero já ia de
+  `flex-col` (empilhado) para `lg:flex-row` desde a primeira versão. Se o
+  design entregar um mockup mobile dedicado do portal, essa decisão precisa
+  ser revisitada.
 
 ## Próximos passos (fora do escopo desta etapa)
 
 - [ ] Substituir `mock-portal.ts`/`integrator-theme.ts` por consulta real
       (API/DB) usando o `slug` da URL.
 - [ ] Decidir se o portal precisa de autenticação e, se sim, implementá-la.
-- [ ] Layout mobile do portal (o `DESIGN.md` só especifica mobile para o
-      dashboard do integrador em §4.4, não para o portal — verificar com
-      design antes de assumir o mesmo padrão).
+- [ ] Validar com design se o portal precisa de um mockup mobile dedicado
+      (hoje é só uma versão responsiva da página web, ver premissa acima).
 - [ ] Conectar o link "Ver portal" e o menu "···" do dashboard a ações reais
       (o menu ainda não tem handler, ver `docs/dashboard-integrador.md`).
 - [ ] Middleware de resolução de white-label por domínio/subdomínio, caso o

@@ -8,11 +8,12 @@ quando existir.
 ## Estado atual
 
 - Tokens, fontes e componentes base (`Button`, `StatusBadge`, `Input`,
-  `KPICard`, `SolvoLogo`, `ClientTableRow`, `BarChart`, `Modal`).
+  `KPICard`, `SolvoLogo`, `ClientTableRow`, `ClientCard`, `BarChart`, `Modal`).
 - Login (`/login`, ver `docs/login.md`) — só visual, não autentica.
-- Dashboard do integrador (`/dashboard`) com dados mocados, incluindo o modal
-  "Novo cliente" (mock, sem persistência — ver `docs/dashboard-integrador.md`).
-- Portal do cliente (`/portal/[slug]`) com white-label mocado.
+- Dashboard do integrador (`/dashboard`) responsivo (desktop + mobile) com
+  dados mocados, incluindo o modal "Novo cliente" (mock, sem persistência —
+  ver `docs/dashboard-integrador.md`).
+- Portal do cliente (`/portal/[slug]`) responsivo com white-label mocado.
 - Tudo sem autenticação real, sem API real, mas já publicado no Vercel.
 
 ## Fase 1 — Completar as telas do `DESIGN.md`
@@ -20,12 +21,14 @@ quando existir.
 - [x] **Página de login** (layout §4.1) — `/login`, ver `docs/login.md`.
 - [x] **Modal "Novo cliente"** — `NewClientModal` + `Modal` genérico, ver
       `docs/dashboard-integrador.md`.
-- [ ] **`<ClientCard>` mobile** (§4.4) — reaproveitar `mockClients`, ver
-      `docs/dashboard-integrador.md`.
-- [ ] **Layout mobile do dashboard** (grid de 3 KPIs, bottom nav de 4 abas).
-- [ ] Layout mobile do portal — o `DESIGN.md` não especifica esse breakpoint
-      explicitamente; validar com design antes de assumir o padrão do
-      dashboard (anotado em `docs/portal-cliente.md`).
+- [x] **`<ClientCard>` mobile** (§4.4) — ver `docs/dashboard-integrador.md`.
+- [x] **Layout mobile do dashboard** — `MobileHeader` + `BottomNav` + grid de
+      3 KPIs, ver `docs/dashboard-integrador.md`. Não confirmado visualmente
+      num viewport real de ~390px (limitação do ambiente de automação usado
+      nesta etapa — verificado via build + inspeção do HTML).
+- [x] Portal responsivo — sem layout mobile dedicado (o `DESIGN.md` não
+      especifica um para o portal); ajustado com breakpoints na mesma página,
+      ver premissa em `docs/portal-cliente.md`.
 
 ## Fase 2 — Tornar o dashboard funcional
 
