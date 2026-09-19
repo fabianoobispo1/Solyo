@@ -27,6 +27,10 @@ src/components/ui/Button.test.tsx
 src/components/ui/StatusBadge.test.tsx
 src/components/ui/Input.test.tsx
 src/components/ui/Modal.test.tsx
+src/components/ui/KPICard.test.tsx
+src/components/ui/SolvoLogo.test.tsx
+src/components/ui/ClientTableRow.test.tsx
+src/components/ui/ClientCard.test.tsx
 convex/lib/generation.test.ts
 convex/lib/tenant.test.ts
 convex/plants.test.ts
@@ -97,6 +101,14 @@ usuário real faz (dispara a sequência certa de eventos, respeita
 específico direto num elemento (ex: clicar no backdrop do `Modal`, que não
 tem role/texto pra selecionar via `user-event`).
 
+**Pegadinha do `navigator.clipboard`**: `userEvent.setup()` instala seu
+próprio stub de `navigator.clipboard` (usado internamente pra simular
+copiar/colar via teclado). Se você mockar `navigator.clipboard` com
+`Object.defineProperty` **antes** de chamar `userEvent.setup()`, o setup
+sobrescreve seu mock e o `writeText` espionado nunca é chamado de verdade.
+Sempre chame `userEvent.setup()` primeiro, e só depois defina o mock — ver
+`ClientCard.test.tsx` (teste "copia o link absoluto do portal").
+
 ## O que é obrigatório testar ao mexer em `convex/plants.ts` (ou schema)
 
 **Isolamento entre tenants é a regra inegociável do projeto** (ver
@@ -117,12 +129,12 @@ do mesmo tenant.
 
 ## O que não está coberto ainda
 
-- **Componentes que dependem do Convex** (`ClientTableRow`/`ClientCard`
-  ainda não, `NewClientModal`/`EditClientModal`, tudo em
-  `src/components/dashboard/`) — testá-los exige mockar `useQuery`/
-  `useMutation`/`useAuthActions`, o que essa etapa não cobriu. Só os
-  componentes puramente apresentacionais de `src/components/ui/` (Button,
-  StatusBadge, Input, Modal) têm teste até aqui.
+- **Componentes que dependem do Convex** (`NewClientModal`/
+  `EditClientModal`, tudo em `src/components/dashboard/`) — testá-los exige
+  mockar `useQuery`/`useMutation`/`useAuthActions`, o que essa etapa não
+  cobriu. Todos os componentes puramente apresentacionais de
+  `src/components/ui/` (Button, StatusBadge, Input, Modal, KPICard,
+  SolvoLogo, ClientTableRow, ClientCard) já têm teste.
 - `src/lib/data/*` (os hooks) — são wrappers finos de `useQuery`/`useMutation`
   do Convex; a cobertura real está nas funções Convex por trás deles.
 - Rotas Next inteiras (`src/app/**`) — sem teste de integração/E2E (ex:
