@@ -84,8 +84,9 @@ o doc com o detalhe/premissa original quando existir.
       tokens).
 - [x] Deployment de produção do Convex publicado, com env vars e seed de
       demonstração — ver `docs/backend-convex.md`.
-- [ ] `vercel git connect` para deploy automático a cada push (hoje o deploy
-      pro Vercel é manual via `npx vercel --prod`).
+- [x] Deploy automático a cada push em `main` (`vercel git connect` ligado
+      ao repositório do GitHub) — não precisa mais rodar `npx vercel --prod`
+      manualmente.
 - [ ] Trocar o tenant de demonstração por um processo real de onboarding de
       integrador (o seed foi pensado só pra popular o ambiente, não é como
       contas de produção de verdade serão criadas).

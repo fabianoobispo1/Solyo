@@ -50,6 +50,15 @@ Para deployar funções novas pra produção sem passar pelo prompt interativo
 (`npx convex deployment token delete <nome> --prod`) — não deixe uma deploy
 key viva sem necessidade.
 
+**O Vercel está conectado ao repositório do GitHub** (`vercel git connect`)
+— todo push em `main` builda e publica o Next automaticamente, sem precisar
+rodar `npx vercel --prod` à mão. **Isso não inclui o backend do Convex**: o
+deploy automático do Vercel só builda o app Next.js, ele não roda
+`npx convex deploy`. Sempre que mudar algo em `convex/**` (schema, queries,
+mutations), rode `npx convex deploy` pra produção manualmente (como descrito
+acima) *antes ou junto* do push — senão o front em produção pode chamar uma
+função que ainda não existe no deployment de produção do Convex.
+
 ## Tenant de demonstração
 
 Rodar uma vez por deployment (idempotente — pode rodar de novo sem duplicar
@@ -175,7 +184,6 @@ UI não precisou mudar, só a fonte dos dados.
       descontinuar `/portal/[slug]` quando isso existir).
 - [x] Deployment de produção do Convex publicado (ver seção "Produção"
       acima).
-- [ ] Deploy automático a cada push (`vercel git connect`) — hoje o deploy
-      pro Vercel é manual via `npx vercel --prod`.
+- [x] Deploy automático a cada push em `main` (`vercel git connect`).
 - [ ] Decidir se o cliente final (`role: "cliente_final"`) um dia loga; hoje
       `clientProfileId` existe no schema mas nunca é preenchido.
