@@ -78,6 +78,7 @@ export default function DashboardPage() {
                   kwp={client.kwp}
                   generationKwh={client.generationKwh}
                   status={client.status}
+                  portalHref={client.slug ? `/portal/${client.slug}` : undefined}
                 />
               ))}
             </tbody>

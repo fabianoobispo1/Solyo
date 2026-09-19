@@ -318,6 +318,6 @@ Linha de atribuição no header:
 - [x] Componentes base: `Button`, `StatusBadge`, `Input`, `KPICard`, `SolvoLogo`
 - [x] Layout `(integrador)/layout.tsx` — sidebar + topbar
 - [x] Página `(integrador)/dashboard` — KPI row + tabela (dados mocados; ver `docs/dashboard-integrador.md`)
-- [ ] Rota pública `portal/[slug]` — hero + chart + metrics bar
-- [ ] `BarChart` com SVG inline (sem lib externa para o MVP)
-- [ ] Middleware de white-label: lookup `slug` → `IntegratorTheme`
+- [x] Rota pública `portal/[slug]` — hero + chart + metrics bar (dados mocados; ver `docs/portal-cliente.md`)
+- [x] `BarChart` com SVG inline (sem lib externa para o MVP)
+- [x] Lookup mocado `slug` → `IntegratorTheme` (em memória; middleware real de white-label por domínio fica como próximo passo)

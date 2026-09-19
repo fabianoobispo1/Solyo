@@ -49,10 +49,10 @@ importam esses arrays diretamente.
   dia`/`Boa tarde`), para evitar prender o texto ao horário de build em uma
   página estática. Se a página passar a ser dinâmica (com dados de sessão),
   reavaliar.
-- **Ações da linha da tabela (`Ver portal`, `···`) não têm handlers.** Os
-  props `onViewPortal`/`onOpenMenu` existem em `ClientTableRow` mas a página
-  do dashboard não os passa — a intenção é conectá-los quando a rota
-  `portal/[slug]` e o menu de ações existirem.
+- **"Ver portal" já linka para `/portal/[slug]`** (ver
+  `docs/portal-cliente.md`) quando o `Client` mocado tem `slug`; sem `slug`
+  o link aparece desabilitado. O menu "···" ainda não tem handler — é um
+  placeholder visual.
 - **Ícones da sidebar são SVGs escritos à mão**, sem dependência de ícones
   externa, seguindo a mesma linha do `BarChart` inline citado no `DESIGN.md`
   (§4 "sem lib externa para o MVP").
@@ -68,7 +68,9 @@ importam esses arrays diretamente.
       correspondentes na Sidebar.
 - [ ] `<ClientCard>` (mobile) — item do checklist do `DESIGN.md` ainda não
       implementado; reaproveitar `mockClients` para o layout 4.4.
-- [ ] Rota pública `portal/[slug]` (layout 4.3) + `<BarChart>` inline.
-- [ ] Middleware de white-label (`IntegratorTheme`, §5 do `DESIGN.md`).
 - [ ] Testes (unitários dos componentes `ui/` e de integração da página do
       dashboard).
+
+A rota `portal/[slug]` (layout 4.3), o `<BarChart>` inline e o white-label
+mocado (`IntegratorTheme`) já foram implementados — ver
+`docs/portal-cliente.md`.

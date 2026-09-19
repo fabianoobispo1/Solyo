@@ -2,6 +2,8 @@ import { StatusKind } from "@/components/ui/StatusBadge";
 
 export interface Client {
   id: string;
+  /** Quando presente, habilita o link "Ver portal" para /portal/[slug]. Ver docs/dashboard-integrador.md. */
+  slug?: string;
   name: string;
   plant: string;
   city: string;
@@ -14,6 +16,7 @@ export interface Client {
 export const mockClients: Client[] = [
   {
     id: "cl_01",
+    slug: "marcos-andrade",
     name: "Marcos Andrade",
     plant: "Residência Jardim Europa",
     city: "Porto Alegre, RS",
@@ -23,6 +26,7 @@ export const mockClients: Client[] = [
   },
   {
     id: "cl_02",
+    slug: "fazenda-boa-vista",
     name: "Fazenda Boa Vista",
     plant: "Sítio Boa Vista",
     city: "Santa Maria, RS",
@@ -32,6 +36,7 @@ export const mockClients: Client[] = [
   },
   {
     id: "cl_03",
+    slug: "loja-ferreira-materiais",
     name: "Loja Ferreira Materiais",
     plant: "Galpão Comercial",
     city: "Caxias do Sul, RS",

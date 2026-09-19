@@ -1,7 +1,7 @@
+import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { getAvatarGradient, getInitials } from "@/lib/avatar";
 import { StatusBadge, StatusKind } from "@/components/ui/StatusBadge";
-import { Button } from "@/components/ui/Button";
 
 export interface ClientTableRowProps {
   name: string;
@@ -10,8 +10,8 @@ export interface ClientTableRowProps {
   kwp: number;
   generationKwh: number;
   status: StatusKind;
-  onViewPortal?: () => void;
-  onOpenMenu?: () => void;
+  /** /portal/[slug] do cliente. Sem valor, o link "Ver portal" aparece desabilitado. */
+  portalHref?: string;
 }
 
 export function ClientTableRow({
@@ -21,8 +21,7 @@ export function ClientTableRow({
   kwp,
   generationKwh,
   status,
-  onViewPortal,
-  onOpenMenu,
+  portalHref,
 }: ClientTableRowProps) {
   const isAlertRow = status === "alert";
 
@@ -67,12 +66,24 @@ export function ClientTableRow({
       </td>
       <td className="py-3.5 pl-4 pr-6">
         <div className="flex items-center justify-end gap-2">
-          <Button variant="secondary" size="sm" onClick={onViewPortal}>
-            Ver portal
-          </Button>
+          {portalHref ? (
+            <Link
+              href={portalHref}
+              target="_blank"
+              className="inline-flex h-[38px] items-center justify-center rounded-btn border border-brand-emerald px-4 font-body text-sm font-medium text-brand-emerald hover:bg-brand-emerald/5"
+            >
+              Ver portal
+            </Link>
+          ) : (
+            <span
+              title="Portal ainda não configurado para este cliente"
+              className="inline-flex h-[38px] cursor-not-allowed items-center justify-center rounded-btn border border-neutral-border px-4 font-body text-sm font-medium text-neutral-muted"
+            >
+              Ver portal
+            </span>
+          )}
           <button
             type="button"
-            onClick={onOpenMenu}
             aria-label="Mais ações"
             className="flex h-[30px] w-[30px] items-center justify-center rounded-btn-sm text-neutral-secondary hover:bg-neutral-bg"
           >
