@@ -56,6 +56,13 @@ export function EditClientModal({ client, onClose }: EditClientModalProps) {
             defaultValue={client.kwp}
             required
           />
+          <p className="font-body text-xs text-neutral-secondary">
+            Última limpeza:{" "}
+            {client.lastCleaningAt
+              ? new Date(client.lastCleaningAt).toLocaleDateString("pt-BR")
+              : "ainda não registrada"}{" "}
+            — registrada pelo próprio cliente no portal dele.
+          </p>
           {error && <p className="font-body text-sm text-danger">{error}</p>}
           <div className="mt-2 flex justify-end gap-2">
             <Button type="button" variant="ghost" size="sm" onClick={onClose}>

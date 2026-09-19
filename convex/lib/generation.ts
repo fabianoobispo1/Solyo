@@ -83,6 +83,50 @@ export function estimateCo2AvoidedKg(kwh: number): number {
   return Math.round(kwh * CO2_KG_PER_KWH);
 }
 
+export interface SoilingParams {
+  /** % de geração perdida por dia sem limpeza. */
+  lossPerDayPct: number;
+  /** Teto da perda acumulada — sujeira não reduz a geração a zero. */
+  maxLossPct: number;
+}
+
+/** Valores usados quando o tenant ainda não configurou os próprios (ver convex/settings.ts). */
+export const DEFAULT_SOILING_PARAMS: SoilingParams = {
+  lossPerDayPct: 0.3,
+  maxLossPct: 15,
+};
+
+/**
+ * Fator multiplicativo (0–1) aplicado à geração por sujeira acumulada desde
+ * `lastCleaningAt`. Sem data registrada, não penaliza (fator 1) — não dá
+ * pra assumir sujeira de uma usina que nunca teve a limpeza registrada.
+ */
+export function soilingFactor(
+  lastCleaningAt: number | undefined,
+  params: SoilingParams = DEFAULT_SOILING_PARAMS,
+  now: number = Date.now()
+): number {
+  if (lastCleaningAt === undefined) return 1;
+  const daysSince = Math.max(0, (now - lastCleaningAt) / (1000 * 60 * 60 * 24));
+  const lossPct = Math.min(params.maxLossPct, daysSince * params.lossPerDayPct);
+  return 1 - lossPct / 100;
+}
+
+/** Aplica `soilingFactor` a um valor de geração já calculado. */
+export function applySoiling(kwh: number, factor: number): number {
+  if (factor >= 1) return kwh;
+  return Math.max(0, Math.round(kwh * factor));
+}
+
+/** Aplica `soilingFactor` a uma série diária inteira (sem zerar nenhum dia). */
+export function applySoilingToSeries(
+  series: DailyGenerationPoint[],
+  factor: number
+): DailyGenerationPoint[] {
+  if (factor >= 1) return series;
+  return series.map((point) => ({ ...point, kwh: Math.max(1, Math.round(point.kwh * factor)) }));
+}
+
 /** Texto pronto pro pill "+12% vs. média" do portal do cliente. */
 export function formatChangeVsAverage(series: DailyGenerationPoint[]): string {
   if (series.length < 2) return "sem histórico suficiente";

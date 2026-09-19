@@ -3,12 +3,17 @@ import { mutation, query } from "./_generated/server";
 import { Doc, Id } from "./_generated/dataModel";
 import { assertSameTenant, requireTenant } from "./lib/tenant";
 import { generatePortalToken } from "./lib/tokens";
+import { getSoilingParams } from "./settings";
 import {
+  applySoiling,
+  applySoilingToSeries,
   buildDailyGeneration,
   estimateCo2AvoidedKg,
   estimateMonthToDateKwh,
   estimateSavingsBRL,
   formatChangeVsAverage,
+  soilingFactor,
+  SoilingParams,
 } from "./lib/generation";
 
 const statusValidator = v.union(
@@ -19,7 +24,8 @@ const statusValidator = v.union(
 );
 
 /** Shape consumido por src/lib/mock-data.ts::Client — não altere sem checar as páginas. */
-function toClientDTO(plant: Doc<"plants">) {
+function toClientDTO(plant: Doc<"plants">, soilingParams: SoilingParams) {
+  const factor = soilingFactor(plant.lastCleaningAt, soilingParams);
   return {
     id: plant._id,
     slug: plant.portalToken,
@@ -27,9 +33,10 @@ function toClientDTO(plant: Doc<"plants">) {
     plant: plant.name,
     city: plant.city,
     kwp: plant.capacityKwp,
-    generationKwh: estimateMonthToDateKwh(plant.capacityKwp, plant._id),
+    generationKwh: applySoiling(estimateMonthToDateKwh(plant.capacityKwp, plant._id), factor),
     status: plant.status,
     alert: plant.alert,
+    lastCleaningAt: plant.lastCleaningAt ?? null,
   };
 }
 
@@ -44,11 +51,12 @@ export const list = query({
   args: {},
   handler: async (ctx) => {
     const tenant = await requireTenant(ctx);
+    const soilingParams = await getSoilingParams(ctx, tenant._id);
     const plants = await ctx.db
       .query("plants")
       .withIndex("by_tenant", (q) => q.eq("tenantId", tenant._id))
       .collect();
-    return plants.map(toClientDTO);
+    return plants.map((plant) => toClientDTO(plant, soilingParams));
   },
 });
 
@@ -59,7 +67,8 @@ export const get = query({
     const plant = await ctx.db.get(plantId);
     if (!plant) return null;
     assertSameTenant(tenant._id, plant.tenantId);
-    return toClientDTO(plant);
+    const soilingParams = await getSoilingParams(ctx, tenant._id);
+    return toClientDTO(plant, soilingParams);
   },
 });
 
@@ -68,15 +77,16 @@ export const kpis = query({
   args: {},
   handler: async (ctx) => {
     const tenant = await requireTenant(ctx);
+    const soilingParams = await getSoilingParams(ctx, tenant._id);
     const plants = await ctx.db
       .query("plants")
       .withIndex("by_tenant", (q) => q.eq("tenantId", tenant._id))
       .collect();
 
-    const totalGenerationKwh = plants.reduce(
-      (sum, plant) => sum + estimateMonthToDateKwh(plant.capacityKwp, plant._id),
-      0
-    );
+    const totalGenerationKwh = plants.reduce((sum, plant) => {
+      const factor = soilingFactor(plant.lastCleaningAt, soilingParams);
+      return sum + applySoiling(estimateMonthToDateKwh(plant.capacityKwp, plant._id), factor);
+    }, 0);
     const openAlerts = plants.filter(
       (plant) => plant.status === "alert" || plant.status === "offline"
     ).length;
@@ -156,9 +166,17 @@ export const getByToken = query({
     const tenant = await ctx.db.get(plant.tenantId);
     const tenantName = tenant?.name ?? "Solyo";
 
-    const dailyGeneration = buildDailyGeneration(plant.capacityKwp, plant._id);
+    const soilingParams = await getSoilingParams(ctx, plant.tenantId);
+    const factor = soilingFactor(plant.lastCleaningAt, soilingParams);
+    const dailyGeneration = applySoilingToSeries(
+      buildDailyGeneration(plant.capacityKwp, plant._id),
+      factor
+    );
     const todayGenerationKwh = dailyGeneration[dailyGeneration.length - 1].kwh;
-    const monthToDateKwh = estimateMonthToDateKwh(plant.capacityKwp, plant._id);
+    const monthToDateKwh = applySoiling(
+      estimateMonthToDateKwh(plant.capacityKwp, plant._id),
+      factor
+    );
 
     return {
       slug: plant.portalToken,
@@ -171,6 +189,7 @@ export const getByToken = query({
       accumulatedSavingsBRL: estimateSavingsBRL(monthToDateKwh),
       co2AvoidedKg: estimateCo2AvoidedKg(monthToDateKwh),
       dailyGeneration,
+      lastCleaningAt: plant.lastCleaningAt ?? null,
       integrator: {
         slug: plant.tenantId,
         name: tenantName,
@@ -178,5 +197,29 @@ export const getByToken = query({
         primaryHex: "#0C5A46",
       },
     };
+  },
+});
+
+/**
+ * Rota PÚBLICA (/c/[token]) — sem auth, de propósito, mesma lógica de acesso
+ * de `getByToken`: o token em si (128 bits, não-adivinhável) é quem
+ * autoriza. É assim que o cliente final registra a própria limpeza dos
+ * painéis, sem precisar de login (ver docs/portal-cliente.md).
+ */
+export const updateLastCleaning = mutation({
+  args: { token: v.string(), lastCleaningAt: v.number() },
+  handler: async (ctx, { token, lastCleaningAt }) => {
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    if (lastCleaningAt > Date.now() + oneDayMs) {
+      throw new Error("Data de limpeza não pode ser no futuro.");
+    }
+
+    const plant = await ctx.db
+      .query("plants")
+      .withIndex("by_portalToken", (q) => q.eq("portalToken", token))
+      .unique();
+    if (!plant) throw new Error("Portal não encontrado.");
+
+    await ctx.db.patch(plant._id, { lastCleaningAt });
   },
 });

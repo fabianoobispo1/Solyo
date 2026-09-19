@@ -22,9 +22,12 @@ detalhe/premissa original quando existir.
   (redireciona pra `/login` se não autenticado). "Novo cliente" já persiste
   de verdade. Ver `docs/dashboard-integrador.md`.
 - Portal do cliente real: **`/c/[token]`**, resolvido por um `portalToken`
-  não-adivinhável, público (sem login), dados reais via Convex. A rota
-  antiga `/portal/[slug]` continua existindo só como demo do conceito de
-  white-label, 100% mock. Ver `docs/portal-cliente.md`.
+  não-adivinhável, público (sem login), dados reais via Convex. O próprio
+  cliente registra ali a última limpeza dos painéis, que reduz a geração
+  estimada por sujeira acumulada (parâmetros configuráveis por tenant em
+  `/configuracoes`). A rota antiga `/portal/[slug]` continua existindo só
+  como demo do conceito de white-label, 100% mock. Ver
+  `docs/portal-cliente.md`.
 - Backend Convex com isolamento entre tenants coberto por testes
   automatizados (Vitest + `convex-test`). Ver `docs/backend-convex.md` e
   `docs/testing.md`.
@@ -101,7 +104,8 @@ detalhe/premissa original quando existir.
       ClientCard) e dos componentes de `src/components/dashboard/` que
       dependem do Convex (`NewClientModal`/`EditClientModal`, mockando
       `useCreatePlant`/`useUpdatePlant`; `PortalLinkRow`; a paginação de
-      `ClientsPanel`). Ver `docs/testing.md`. 113 testes no total.
+      `ClientsPanel`; `CalculationSettingsForm`; a última limpeza em
+      `PortalView`). Ver `docs/testing.md`. 142 testes no total.
 - [ ] E2E de fluxo completo (ex: Playwright) — lacuna consciente, ver
       `docs/testing.md`.
 - [ ] Observabilidade (erros, analytics de uso do portal).
@@ -127,6 +131,11 @@ detalhe/premissa original quando existir.
 
 ## Fase 5 — Produto (fora do escopo do `DESIGN.md` atual)
 
+- [x] Última limpeza dos painéis, registrada pelo cliente final no próprio
+      portal (`/c/[token]`), influenciando a geração estimada por um fator
+      de sujeira acumulada. Parâmetros da fórmula (%/dia, teto) configuráveis
+      por tenant em `/configuracoes`. Ver `docs/portal-cliente.md`,
+      `docs/backend-convex.md` e `docs/dashboard-integrador.md`.
 - [ ] Notificações quando a geração cair abaixo do esperado (o `alert` de
       `Client`/`ClientPortalData` já modela esse estado).
 - [ ] Exportação de relatórios (PDF/CSV) para o integrador e para o cliente.

@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useAuthActions } from "@convex-dev/auth/react";
 import { Button } from "@/components/ui/Button";
+import { CalculationSettingsForm } from "@/components/dashboard/CalculationSettingsForm";
 import { getAvatarGradient, getInitials } from "@/lib/avatar";
 import { cn } from "@/lib/cn";
 import { useCurrentProfile } from "@/lib/data/useCurrentProfile";
@@ -61,6 +62,8 @@ export default function ConfiguracoesPage() {
           </Button>
         </div>
       </section>
+
+      <CalculationSettingsForm />
     </div>
   );
 }

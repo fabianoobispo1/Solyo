@@ -39,9 +39,23 @@ export default defineSchema({
     ),
     alert: v.optional(v.string()),
     createdAt: v.number(),
+    // Data da última limpeza dos painéis (epoch ms) — sujeira acumulada
+    // desde então reduz a geração estimada, ver convex/lib/generation.ts.
+    // Atualizada pelo cliente final no próprio portal (/c/[token]), não
+    // pelo integrador.
+    lastCleaningAt: v.optional(v.number()),
   })
     .index("by_tenant", ["tenantId"])
     .index("by_portalToken", ["portalToken"]),
+
+  // Parâmetros de cálculo configuráveis por tenant — hoje só a perda de
+  // geração por sujeira acumulada (ver convex/lib/generation.ts). Uma linha
+  // por tenant; se não existir ainda, DEFAULT_SOILING_PARAMS vale.
+  tenantSettings: defineTable({
+    tenantId: v.id("profiles"),
+    soilingLossPerDayPct: v.number(),
+    maxSoilingLossPct: v.number(),
+  }).index("by_tenant", ["tenantId"]),
 
   // Sem uso neste MVP — geração/economia são calculadas a partir de
   // capacityKwp (ver convex/lib/generation.ts). Reservado para quando

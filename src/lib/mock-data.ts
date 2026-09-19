@@ -11,6 +11,8 @@ export interface Client {
   generationKwh: number;
   status: StatusKind;
   alert?: string;
+  /** Epoch ms. Registrada pelo cliente no próprio portal — null se nunca registrada. */
+  lastCleaningAt?: number | null;
 }
 
 export const mockClients: Client[] = [

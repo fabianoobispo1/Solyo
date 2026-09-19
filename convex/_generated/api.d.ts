@@ -18,6 +18,7 @@ import type * as lib_tokens from "../lib/tokens.js";
 import type * as plants from "../plants.js";
 import type * as profiles from "../profiles.js";
 import type * as seed from "../seed.js";
+import type * as settings from "../settings.js";
 
 import type {
   ApiFromModules,
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   plants: typeof plants;
   profiles: typeof profiles;
   seed: typeof seed;
+  settings: typeof settings;
 }>;
 
 /**

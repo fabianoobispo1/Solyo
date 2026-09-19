@@ -19,6 +19,8 @@ export interface ClientPortalData {
   accumulatedSavingsBRL: number;
   co2AvoidedKg: number;
   dailyGeneration: DailyGenerationPoint[];
+  /** Epoch ms. Registrada pelo próprio cliente — null se nunca registrada. */
+  lastCleaningAt: number | null;
   integrator: IntegratorTheme;
 }
 
@@ -35,6 +37,7 @@ const mockPortalSeeds: PortalSeed[] = [
     changeVsAverage: "+12% vs. média",
     accumulatedSavingsBRL: 7820,
     co2AvoidedKg: 628,
+    lastCleaningAt: Date.now() - 12 * 24 * 60 * 60 * 1000,
     integratorSlug: "energia-solar-rs",
     dailyGeneration: [
       { day: "05", kwh: 720, condition: "sunny" },
@@ -63,6 +66,7 @@ const mockPortalSeeds: PortalSeed[] = [
     changeVsAverage: "+5% vs. média",
     accumulatedSavingsBRL: 24_450,
     co2AvoidedKg: 2140,
+    lastCleaningAt: null,
     integratorSlug: "energia-solar-rs",
     dailyGeneration: [
       { day: "05", kwh: 2680, condition: "sunny" },
@@ -91,6 +95,7 @@ const mockPortalSeeds: PortalSeed[] = [
     changeVsAverage: "-38% vs. média",
     accumulatedSavingsBRL: 3960,
     co2AvoidedKg: 302,
+    lastCleaningAt: Date.now() - 60 * 24 * 60 * 60 * 1000,
     integratorSlug: "sol-nordeste",
     dailyGeneration: [
       { day: "05", kwh: 640, condition: "sunny" },
@@ -129,6 +134,7 @@ export function getPortalData(slug: string): ClientPortalData | undefined {
     accumulatedSavingsBRL: seed.accumulatedSavingsBRL,
     co2AvoidedKg: seed.co2AvoidedKg,
     dailyGeneration: seed.dailyGeneration,
+    lastCleaningAt: seed.lastCleaningAt,
     integrator,
   };
 }

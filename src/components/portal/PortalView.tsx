@@ -1,3 +1,6 @@
+"use client";
+
+import { FormEvent, useState } from "react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
 import { BarChart } from "@/components/ui/BarChart";
 import { getAvatarGradient, getInitials } from "@/lib/avatar";
@@ -11,13 +14,23 @@ const statusLabel: Record<ClientPortalData["status"], string> = {
   inactive: "Inativo",
 };
 
+export interface PortalViewProps {
+  portal: ClientPortalData;
+  /**
+   * Quando presente, mostra o formulário de "registrar limpeza" — só a rota
+   * real (`/c/[token]`) passa isso; a demo `/portal/[slug]` fica só com a
+   * leitura, sem mutation nenhuma pra chamar.
+   */
+  onUpdateLastCleaning?: (lastCleaningAt: number) => Promise<void>;
+}
+
 /**
  * Composição visual do portal do cliente (DESIGN.md §4.3), compartilhada
  * entre a rota de demo `/portal/[slug]` (mock) e a rota real `/c/[token]`
  * (Convex) — ambas resolvem para o mesmo shape `ClientPortalData`, então a
  * UI nunca precisou ser refeita, só a fonte dos dados mudou.
  */
-export function PortalView({ portal }: { portal: ClientPortalData }) {
+export function PortalView({ portal, onUpdateLastCleaning }: PortalViewProps) {
   const { integrator } = portal;
 
   return (
@@ -123,8 +136,83 @@ export function PortalView({ portal }: { portal: ClientPortalData }) {
           </span>
         </div>
       </section>
+
+      <LastCleaningSection
+        lastCleaningAt={portal.lastCleaningAt}
+        onUpdateLastCleaning={onUpdateLastCleaning}
+      />
     </div>
   );
+}
+
+function LastCleaningSection({
+  lastCleaningAt,
+  onUpdateLastCleaning,
+}: {
+  lastCleaningAt: number | null;
+  onUpdateLastCleaning?: (lastCleaningAt: number) => Promise<void>;
+}) {
+  const [today] = useState(() => toDateInputValue(Date.now()));
+  const [date, setDate] = useState(today);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!onUpdateLastCleaning || !date) return;
+
+    setError(null);
+    setSubmitting(true);
+    try {
+      await onUpdateLastCleaning(new Date(`${date}T00:00:00`).getTime());
+    } catch {
+      setError("Não foi possível atualizar. Tente novamente.");
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <section className="border-t border-dark-border px-5 py-6 sm:px-8">
+      <div className="mx-auto flex max-w-3xl flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="font-display text-sm font-semibold text-white">
+            Última limpeza dos painéis
+          </h2>
+          <p className="mt-1 font-body text-xs text-white/50">
+            {lastCleaningAt
+              ? `Registrada em ${new Date(lastCleaningAt).toLocaleDateString("pt-BR")}`
+              : "Ainda não registrada"}{" "}
+            — sujeira acumulada reduz a geração estimada.
+          </p>
+        </div>
+
+        {onUpdateLastCleaning && (
+          <form onSubmit={handleSubmit} className="flex flex-wrap items-center gap-2">
+            <input
+              type="date"
+              value={date}
+              max={today}
+              onChange={(event) => setDate(event.target.value)}
+              className="h-9 rounded-btn border border-white/15 bg-white/5 px-3 font-body text-sm text-white outline-none focus:border-white/40"
+            />
+            <button
+              type="submit"
+              disabled={submitting}
+              className="h-9 rounded-btn border border-white/15 px-3 font-body text-sm font-medium text-white hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {submitting ? "Salvando…" : "Registrar limpeza"}
+            </button>
+          </form>
+        )}
+      </div>
+      {error && <p className="mt-2 text-center font-body text-xs text-status-alert-dot sm:text-left">{error}</p>}
+    </section>
+  );
+}
+
+function toDateInputValue(epochMs: number): string {
+  return new Date(epochMs).toISOString().slice(0, 10);
 }
 
 function MetricCell({ value, label }: { value: string; label: string }) {

@@ -1,11 +1,14 @@
 import { describe, expect, it } from "vitest";
 import {
+  applySoiling,
+  applySoilingToSeries,
   buildDailyGeneration,
   estimateCo2AvoidedKg,
   estimateDailyKwh,
   estimateMonthToDateKwh,
   estimateSavingsBRL,
   formatChangeVsAverage,
+  soilingFactor,
 } from "./generation";
 
 describe("estimateDailyKwh", () => {
@@ -71,6 +74,64 @@ describe("estimateSavingsBRL / estimateCo2AvoidedKg", () => {
   it("zero kWh gera zero economia/CO2", () => {
     expect(estimateSavingsBRL(0)).toBe(0);
     expect(estimateCo2AvoidedKg(0)).toBe(0);
+  });
+});
+
+describe("soilingFactor", () => {
+  const params = { lossPerDayPct: 1, maxLossPct: 20 };
+  const now = new Date("2026-01-31T00:00:00Z").getTime();
+  const oneDay = 24 * 60 * 60 * 1000;
+
+  it("sem data de limpeza registrada, não penaliza (fator 1)", () => {
+    expect(soilingFactor(undefined, params, now)).toBe(1);
+  });
+
+  it("limpeza feita agora mesmo não perde geração", () => {
+    expect(soilingFactor(now, params, now)).toBe(1);
+  });
+
+  it("perde proporcionalmente aos dias desde a última limpeza", () => {
+    const fiveDaysAgo = now - 5 * oneDay;
+    expect(soilingFactor(fiveDaysAgo, params, now)).toBeCloseTo(0.95, 5);
+  });
+
+  it("nunca passa do teto configurado (maxLossPct)", () => {
+    const oneYearAgo = now - 365 * oneDay;
+    expect(soilingFactor(oneYearAgo, params, now)).toBeCloseTo(0.8, 5);
+  });
+
+  it("data de limpeza no futuro não gera fator > 1", () => {
+    const tomorrow = now + oneDay;
+    expect(soilingFactor(tomorrow, params, now)).toBe(1);
+  });
+});
+
+describe("applySoiling / applySoilingToSeries", () => {
+  it("fator 1 não altera o valor", () => {
+    expect(applySoiling(1000, 1)).toBe(1000);
+  });
+
+  it("reduz o kWh proporcionalmente ao fator", () => {
+    expect(applySoiling(1000, 0.9)).toBe(900);
+  });
+
+  it("nunca aplica um kWh negativo", () => {
+    expect(applySoiling(10, 0)).toBe(0);
+  });
+
+  it("aplica o fator a cada ponto da série, sem zerar nenhum dia", () => {
+    const series = [
+      { day: "01", kwh: 100, condition: "sunny" as const },
+      { day: "02", kwh: 10, condition: "cloudy" as const },
+    ];
+    const result = applySoilingToSeries(series, 0.9);
+    expect(result[0].kwh).toBe(90);
+    expect(result[1].kwh).toBe(9);
+  });
+
+  it("fator 1 devolve a mesma série (sem cópia desnecessária)", () => {
+    const series = [{ day: "01", kwh: 100, condition: "sunny" as const }];
+    expect(applySoilingToSeries(series, 1)).toBe(series);
   });
 });
 

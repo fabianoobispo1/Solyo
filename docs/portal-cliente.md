@@ -55,6 +55,23 @@ Cada "seed" em `mock-portal.ts` tem um `integratorSlug` que resolve, via
 `#0C5A46` do gradiente do hero e o orb inferior-esquerdo — o accent `#F2A422`
 (amber) e o `#040C18` (dark bg) permanecem fixos da marca Solyo.
 
+## Última limpeza dos painéis
+
+`PortalView` mostra um cartão (rodapé da página) com a data da última
+limpeza registrada e, só em `/c/[token]`, um formulário pra atualizá-la —
+`onUpdateLastCleaning` é uma prop opcional; sem ela (rota demo), o cartão
+fica só leitura. `/app/c/[token]/page.tsx` passa
+`useUpdateLastCleaning()` (`src/lib/data/usePlantMutations.ts`), que chama
+`convex/plants.ts::updateLastCleaning` — uma mutation **pública** (mesma
+lógica de acesso de `getByToken`: o token em si autoriza, sem login). É
+assim que o cliente final registra a própria limpeza, sem precisar virar
+`cliente_final` autenticado.
+
+Essa data influencia a geração estimada — sujeira acumulada desde a
+limpeza reduz o kWh mostrado (`convex/lib/generation.ts::soilingFactor`).
+Os parâmetros da perda (%/dia e teto) são configuráveis pelo integrador em
+`/configuracoes`, ver `docs/backend-convex.md` e `docs/dashboard-integrador.md`.
+
 ## Premissas assumidas nesta implementação
 
 - **As duas rotas compartilham a mesma UI** (`PortalView`) de propósito —
@@ -75,6 +92,14 @@ Cada "seed" em `mock-portal.ts` tem um `integratorSlug` que resolve, via
 - **Em `/c/[token]`, geração/economia/CO₂ continuam calculadas a partir de
   `capacityKwp`** (`convex/lib/generation.ts`), não de telemetria real de
   inversor — ver `docs/backend-convex.md`.
+- **O fator de sujeira é uniforme em toda a série de 14 dias**, calculado só
+  a partir de "dias desde a última limpeza *hoje*" — não simula uma limpeza
+  que aconteceu no meio da série resetando a perda num dia específico do
+  passado (não tem telemetria real por trás pra justificar essa precisão).
+  Ver `soilingFactor`/`applySoilingToSeries` em `convex/lib/generation.ts`.
+- **A única validação da data de limpeza é "não pode ser no futuro"**
+  (com 1 dia de tolerância pra fuso horário) — dá pra registrar uma limpeza
+  de anos atrás sem aviso, não é um caso que valha a pena travar no MVP.
 - **`BarChart` dimensiona o tooltip do dia atual pelo texto**, não por um
   valor fixo, para não cortar valores com mais dígitos (`22 kWh` vs.
   `1.043 kWh`).

@@ -12,3 +12,12 @@ export function useCreatePlant() {
 export function useUpdatePlant() {
   return useMutation(api.plants.update);
 }
+
+/**
+ * convex/plants.ts::updateLastCleaning — usado pelo portal público
+ * (/c/[token]), não pelo dashboard: é o próprio cliente final quem registra
+ * a limpeza dos painéis, autorizado pelo portalToken, sem login.
+ */
+export function useUpdateLastCleaning() {
+  return useMutation(api.plants.updateLastCleaning);
+}

@@ -10,7 +10,7 @@ src/app/(integrador)/layout.tsx        # Sidebar/Topbar (desktop) + MobileHeader
 src/app/(integrador)/dashboard/page.tsx # KPI row + <ClientsPanel/>
 src/app/(integrador)/clientes/page.tsx  # Só <ClientsPanel/>, sem KPIs — destino do link "Clientes"
 src/app/(integrador)/portais/page.tsx   # Lista de links de portal por cliente (<PortalLinkRow/>)
-src/app/(integrador)/configuracoes/page.tsx # Perfil do integrador logado + "Sair"
+src/app/(integrador)/configuracoes/page.tsx # Perfil do integrador logado + "Sair" + parâmetros de cálculo
 src/components/layout/Sidebar.tsx       # Navegação lateral (220px) + rodapé do usuário — hidden < md
 src/components/layout/Topbar.tsx        # Saudação + botão "Novo cliente" (68px) — hidden < md
 src/components/layout/MobileHeader.tsx  # Logo + notificação + avatar (56px) — hidden >= md
@@ -23,7 +23,9 @@ src/components/ui/Modal.tsx             # Shell genérico de modal (overlay + ro
 src/components/dashboard/NewClientModal.tsx # Botão "+ Novo cliente" + modal de cadastro (Convex)
 src/components/dashboard/EditClientModal.tsx # Modal de edição, aberto pelo "···" da tabela/card
 src/components/dashboard/PortalLinkRow.tsx # Linha de /portais: nome, cidade, abrir/copiar link do portal
+src/components/dashboard/CalculationSettingsForm.tsx # /configuracoes: perda de geração por sujeira (%/dia, teto)
 src/lib/data/useClients.ts              # Hook: lista de clientes do tenant logado
+src/lib/data/useCalculationSettings.ts  # Hooks: ler/salvar os parâmetros de cálculo do tenant
 src/lib/data/useKpis.ts                 # Hook: KPIs agregados do tenant logado
 src/lib/data/useCurrentProfile.ts       # Hook: nome/e-mail do integrador logado (saudação, /configuracoes)
 src/lib/data/usePlantMutations.ts       # Hooks: criar/editar cliente
@@ -92,6 +94,13 @@ escopados ao tenant autenticado — **não** mais os arrays de
   papel) via `useCurrentProfile()` + botão "Sair" (mesmo `signOut()` do
   menu da Sidebar). Não tem edição de perfil, troca de senha nem
   preferências ainda — é intencionalmente mínimo, ver "Próximos passos".
+- **`/configuracoes` também tem os "Parâmetros de cálculo"**
+  (`CalculationSettingsForm`, `src/components/dashboard/
+  CalculationSettingsForm.tsx`): a perda de geração por dia sem limpeza (%)
+  e o teto dessa perda acumulada (%), salvos por tenant via
+  `convex/settings.ts`. Afetam a geração mostrada em todo o tenant — ver
+  "Última limpeza dos painéis" em `docs/portal-cliente.md` e o cálculo em
+  `docs/backend-convex.md`.
 - **Saudação da Topbar é estática**, não baseada em horário do dia (`Bom
   dia`/`Boa tarde`), para evitar prender o texto ao horário de build em uma
   página estática. Se a página passar a ser dinâmica (com dados de sessão),
@@ -105,7 +114,9 @@ escopados ao tenant autenticado — **não** mais os arrays de
   via `useUpdatePlant` — mesmos três campos do "Novo cliente", por
   consistência visual. Não dá pra editar `name` (nome da usina), `status`
   nem `alert` por essa UI ainda, embora a mutation `plants.update` já
-  suporte isso.
+  suporte isso. Também mostra a data da última limpeza, só leitura — quem
+  atualiza isso é o próprio cliente final no portal dele
+  (`docs/portal-cliente.md`), não o integrador.
 - **Ícones da sidebar são SVGs escritos à mão**, sem dependência de ícones
   externa, seguindo a mesma linha do `BarChart` inline citado no `DESIGN.md`
   (§4 "sem lib externa para o MVP").

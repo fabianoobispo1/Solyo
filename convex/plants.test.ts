@@ -170,3 +170,161 @@ describe("rota pública /c/[token] (convex/plants.ts::getByToken)", () => {
     expect(result).toBeNull();
   });
 });
+
+describe("última limpeza e o efeito de sujeira na geração", () => {
+  it("uma usina sem limpeza registrada devolve lastCleaningAt null", async () => {
+    const t = convexTest(schema);
+    const alice = await createIntegrador(t, "Alice", "alice@example.com");
+
+    const { portalToken } = await alice.mutation(api.plants.create, {
+      name: "Usina",
+      ownerName: "Cliente",
+      city: "Porto Alegre, RS",
+      capacityKwp: 5.4,
+    });
+
+    const publicView = await t.query(api.plants.getByToken, { token: portalToken });
+    expect(publicView?.lastCleaningAt).toBeNull();
+
+    const list = await alice.query(api.plants.list, {});
+    expect(list[0].lastCleaningAt).toBeNull();
+  });
+
+  it("o cliente final registra a limpeza pelo token, sem precisar de login", async () => {
+    const t = convexTest(schema);
+    const alice = await createIntegrador(t, "Alice", "alice@example.com");
+
+    const { portalToken } = await alice.mutation(api.plants.create, {
+      name: "Usina",
+      ownerName: "Cliente",
+      city: "Porto Alegre, RS",
+      capacityKwp: 5.4,
+    });
+
+    const cleanedAt = Date.now();
+    await t.mutation(api.plants.updateLastCleaning, { token: portalToken, lastCleaningAt: cleanedAt });
+
+    const publicView = await t.query(api.plants.getByToken, { token: portalToken });
+    expect(publicView?.lastCleaningAt).toBe(cleanedAt);
+  });
+
+  it("rejeita registrar uma limpeza no futuro", async () => {
+    const t = convexTest(schema);
+    const alice = await createIntegrador(t, "Alice", "alice@example.com");
+
+    const { portalToken } = await alice.mutation(api.plants.create, {
+      name: "Usina",
+      ownerName: "Cliente",
+      city: "Porto Alegre, RS",
+      capacityKwp: 5.4,
+    });
+
+    const nextYear = Date.now() + 365 * 24 * 60 * 60 * 1000;
+    await expect(
+      t.mutation(api.plants.updateLastCleaning, { token: portalToken, lastCleaningAt: nextYear })
+    ).rejects.toThrow(/futuro/);
+  });
+
+  it("rejeita um token que não existe", async () => {
+    const t = convexTest(schema);
+    await expect(
+      t.mutation(api.plants.updateLastCleaning, {
+        token: "token-que-nao-existe",
+        lastCleaningAt: Date.now(),
+      })
+    ).rejects.toThrow(/[Nn]ão encontrado/);
+  });
+
+  it("sujeira acumulada reduz a geração — mais dias sem limpeza, menos kWh", async () => {
+    const t = convexTest(schema);
+    const alice = await createIntegrador(t, "Alice", "alice@example.com");
+
+    const { portalToken } = await alice.mutation(api.plants.create, {
+      name: "Usina",
+      ownerName: "Cliente",
+      city: "Porto Alegre, RS",
+      capacityKwp: 5.4,
+    });
+
+    // Parâmetro de perda bem alto (10%/dia) só pra tornar o efeito visível
+    // com poucos dias, sem depender do valor default de produção.
+    await alice.mutation(api.settings.updateCalculationSettings, {
+      soilingLossPerDayPct: 10,
+      maxSoilingLossPct: 90,
+    });
+
+    const cleanedRecently = Date.now() - 1 * 24 * 60 * 60 * 1000;
+    const cleanedLongAgo = Date.now() - 8 * 24 * 60 * 60 * 1000;
+
+    await t.mutation(api.plants.updateLastCleaning, {
+      token: portalToken,
+      lastCleaningAt: cleanedRecently,
+    });
+    const recentView = await t.query(api.plants.getByToken, { token: portalToken });
+
+    await t.mutation(api.plants.updateLastCleaning, {
+      token: portalToken,
+      lastCleaningAt: cleanedLongAgo,
+    });
+    const oldView = await t.query(api.plants.getByToken, { token: portalToken });
+
+    expect(oldView!.todayGenerationKwh).toBeLessThan(recentView!.todayGenerationKwh);
+  });
+});
+
+describe("convex/settings.ts — parâmetros de cálculo por tenant", () => {
+  it("sem configuração salva, devolve os padrões", async () => {
+    const t = convexTest(schema);
+    const alice = await createIntegrador(t, "Alice", "alice@example.com");
+
+    const settings = await alice.query(api.settings.getCalculationSettings, {});
+    expect(settings.soilingLossPerDayPct).toBeGreaterThan(0);
+    expect(settings.maxSoilingLossPct).toBeGreaterThan(0);
+  });
+
+  it("salva e devolve os parâmetros customizados do tenant", async () => {
+    const t = convexTest(schema);
+    const alice = await createIntegrador(t, "Alice", "alice@example.com");
+
+    await alice.mutation(api.settings.updateCalculationSettings, {
+      soilingLossPerDayPct: 0.5,
+      maxSoilingLossPct: 25,
+    });
+
+    const settings = await alice.query(api.settings.getCalculationSettings, {});
+    expect(settings).toEqual({ soilingLossPerDayPct: 0.5, maxSoilingLossPct: 25 });
+  });
+
+  it("rejeita parâmetros negativos", async () => {
+    const t = convexTest(schema);
+    const alice = await createIntegrador(t, "Alice", "alice@example.com");
+
+    await expect(
+      alice.mutation(api.settings.updateCalculationSettings, {
+        soilingLossPerDayPct: -1,
+        maxSoilingLossPct: 10,
+      })
+    ).rejects.toThrow(/negativ/);
+  });
+
+  it("os parâmetros de um tenant não vazam nem afetam o outro", async () => {
+    const t = convexTest(schema);
+    const alice = await createIntegrador(t, "Alice", "alice@example.com");
+    const bob = await createIntegrador(t, "Bob", "bob@example.com");
+
+    await alice.mutation(api.settings.updateCalculationSettings, {
+      soilingLossPerDayPct: 5,
+      maxSoilingLossPct: 50,
+    });
+
+    const bobSettings = await bob.query(api.settings.getCalculationSettings, {});
+    expect(bobSettings.soilingLossPerDayPct).not.toBe(5);
+  });
+
+  it("exige login", async () => {
+    const t = convexTest(schema);
+    await expect(t.query(api.settings.getCalculationSettings, {})).rejects.toThrow(
+      /[Nn]ão autenticado/
+    );
+  });
+});

@@ -9,14 +9,15 @@ uma tabela `tenants` separada — o próprio `profile` do integrador (role
 ## Estrutura de arquivos
 
 ```
-convex/schema.ts          # profiles, plants, invites, readings/tariffs (sem uso ainda)
+convex/schema.ts          # profiles, plants, tenantSettings, invites, readings/tariffs (sem uso ainda)
 convex/auth.config.ts     # domain do Convex Auth
 convex/auth.ts            # Password provider + callback que cria o profile
 convex/http.ts            # rotas HTTP do Convex Auth
 convex/lib/tenant.ts      # requireUser / requireTenant / assertRole / assertSameTenant
 convex/lib/tokens.ts      # generateToken (usado por portalToken e por invites)
-convex/lib/generation.ts  # geração/economia/CO2 mock a partir de capacityKwp
-convex/plants.ts          # list / get / kpis / create / update / getByToken
+convex/lib/generation.ts  # geração/economia/CO2 mock a partir de capacityKwp + soilingFactor (sujeira)
+convex/plants.ts          # list / get / kpis / create / update / getByToken / updateLastCleaning (pública)
+convex/settings.ts        # getCalculationSettings / updateCalculationSettings — parâmetros de sujeira por tenant
 convex/profiles.ts        # me (perfil do usuário logado)
 convex/invites.ts         # create (CLI) / getStatus / accept — criação de conta por convite, ver docs/login.md
 convex/seed.ts            # seedDemoTenant — cria "Aurora Solar" + 4 clientes de MG
@@ -191,10 +192,11 @@ por `assertSameTenant` (compara `tenantId`). Isso é o que garante que um
 integrador nunca vê ou altera dado de outro — coberto por testes em
 `convex/plants.test.ts` (ver `docs/testing.md`).
 
-A única função que **não** exige tenant é `plants.getByToken`
-(usada por `/c/[token]`), de propósito: é a rota pública do portal do
-cliente final, resolvida pelo `portalToken` não-adivinhável, e devolve só
-os dados daquela usina — nunca das outras do mesmo integrador.
+As únicas funções que **não** exigem tenant são `plants.getByToken` (leitura)
+e `plants.updateLastCleaning` (escrita), ambas usadas por `/c/[token]`, de
+propósito: são a superfície pública do portal do cliente final, resolvidas
+pelo `portalToken` não-adivinhável, e só afetam a usina daquele token —
+nunca outra do mesmo integrador.
 
 ## Segurança das rotas públicas (revisão feita, sem mudança de código)
 
@@ -259,18 +261,44 @@ UI não precisou mudar, só a fonte dos dados.
   integrador (cor customizada por tenant). A rota real (`/c/[token]`) não
   tem esse theming ainda: usa sempre o verde da Solyo, porque o schema atual
   não guarda uma cor por tenant. Ver `docs/portal-cliente.md`.
-- Busca/filtro/paginação do dashboard continuam só visuais (não filtram
-  `useClients()`).
 - O modal "Novo cliente" não tem campo para o nome da usina — usa
   `Usina de ${ownerName}` como padrão (ver `NewClientModal`).
 - O "···" da tabela/cards abre `EditClientModal`, que usa `plants.update` —
   ver `docs/dashboard-integrador.md`.
+- **Geração/economia/CO₂ continuam mock** a partir de `capacityKwp`, agora
+  também ajustados pelo `soilingFactor` (sujeira desde a última limpeza) —
+  ver a seção abaixo. Nenhum dos dois vem de telemetria real de inversor.
+
+## Última limpeza e o efeito de sujeira na geração
+
+`plants.lastCleaningAt` (epoch ms, opcional) guarda quando o cliente final
+limpou os painéis pela última vez — atualizado só pelo próprio cliente, via
+`plants.updateLastCleaning` (pública, mesma lógica de acesso de
+`getByToken`: o `portalToken` autoriza, sem login), chamada pelo formulário
+em `PortalView` (`/c/[token]`). Ver `docs/portal-cliente.md`.
+
+Essa data alimenta `convex/lib/generation.ts::soilingFactor`, que devolve
+um multiplicador (0–1) aplicado à geração estimada: quanto mais dias sem
+limpeza, menor o fator, até um teto configurável (sujeira nunca zera a
+geração). Sem `lastCleaningAt` registrado, o fator é sempre 1 (não penaliza
+uma usina que nunca teve limpeza registrada — não dá pra assumir sujeira
+sem essa informação). O fator é aplicado uniformemente à série de 14 dias
+inteira, não simula uma limpeza acontecendo no meio do histórico (ver
+premissa em `docs/portal-cliente.md`).
+
+Os dois parâmetros da fórmula (`soilingLossPerDayPct`, `maxSoilingLossPct`)
+são configuráveis **por tenant**, não fixos no código: `convex/settings.ts`
+guarda uma linha por tenant em `tenantSettings`; sem configuração salva
+ainda, `DEFAULT_SOILING_PARAMS` (`convex/lib/generation.ts`) vale. A UI fica
+em `/configuracoes` (`CalculationSettingsForm`), ver
+`docs/dashboard-integrador.md`.
 
 ## Próximos passos (fora do escopo desta etapa)
 
-- [ ] Busca/filtro/paginação reais no dashboard.
 - [ ] Guardar uma cor/logo por tenant e aplicar em `/c/[token]` (ou
       descontinuar `/portal/[slug]` quando isso existir).
+- [ ] Simular a sujeira dia a dia na série de 14 dias em vez de um fator
+      uniforme calculado só a partir de hoje (ver premissa acima).
 - [x] Deployment de produção do Convex publicado (ver seção "Produção"
       acima).
 - [x] Deploy automático a cada push em `main` (`vercel git connect`).
