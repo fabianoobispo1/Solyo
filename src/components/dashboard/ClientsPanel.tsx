@@ -19,6 +19,8 @@ const STATUS_OPTIONS: { value: StatusKind; label: string }[] = [
   { value: "inactive", label: "Inativo" },
 ];
 
+const PAGE_SIZE = 10;
+
 /**
  * Busca + filtro + tabela/cards de clientes, com edição via modal.
  * Usado tanto no painel (`/dashboard`) quanto na página dedicada
@@ -29,6 +31,7 @@ export function ClientsPanel() {
   const [editingClient, setEditingClient] = useState<Client | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilters, setStatusFilters] = useState<StatusKind[]>([]);
+  const [page, setPage] = useState(1);
 
   const isLoading = clients === undefined;
 
@@ -48,6 +51,16 @@ export function ClientsPanel() {
   }, [clients, searchQuery, statusFilters]);
 
   const hasFilters = searchQuery.trim() !== "" || statusFilters.length > 0;
+
+  // Clampa em vez de resetar via efeito: se um filtro reduzir o total de
+  // páginas, a página exibida "desce" sozinha; ao voltar a ter mais
+  // resultados, `page` (preservado) volta a valer.
+  const totalPages = Math.max(1, Math.ceil(filteredClients.length / PAGE_SIZE));
+  const currentPage = Math.min(page, totalPages);
+  const pagedClients = filteredClients.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE
+  );
 
   return (
     <>
@@ -69,7 +82,7 @@ export function ClientsPanel() {
         {!isLoading && filteredClients.length === 0 && <EmptyHint hasFilters={hasFilters} />}
 
         {!isLoading &&
-          filteredClients.map((client) => (
+          pagedClients.map((client) => (
             <ClientCard
               key={client.id}
               name={client.name}
@@ -82,6 +95,22 @@ export function ClientsPanel() {
               onEdit={() => setEditingClient(client)}
             />
           ))}
+
+        {!isLoading && filteredClients.length > 0 && totalPages > 1 && (
+          <div className="flex items-center justify-between pt-1">
+            <span className="font-body text-xs text-neutral-secondary">
+              {(currentPage - 1) * PAGE_SIZE + 1}–
+              {Math.min(currentPage * PAGE_SIZE, filteredClients.length)} de{" "}
+              {filteredClients.length}
+            </span>
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPrevious={() => setPage(currentPage - 1)}
+              onNext={() => setPage(currentPage + 1)}
+            />
+          </div>
+        )}
       </section>
 
       {/* Desktop — tabela (DESIGN.md §4.2) */}
@@ -141,7 +170,7 @@ export function ClientsPanel() {
                 </tr>
               )}
               {!isLoading &&
-                filteredClients.map((client) => (
+                pagedClients.map((client) => (
                   <ClientTableRow
                     key={client.id}
                     name={client.name}
@@ -162,16 +191,18 @@ export function ClientsPanel() {
           <span className="font-body text-xs text-neutral-secondary">
             {isLoading
               ? "Carregando…"
-              : `Mostrando ${filteredClients.length} de ${clients.length}`}
+              : filteredClients.length === 0
+                ? `Mostrando 0 de ${clients.length}`
+                : `Mostrando ${(currentPage - 1) * PAGE_SIZE + 1}–${Math.min(currentPage * PAGE_SIZE, filteredClients.length)} de ${filteredClients.length}`}
           </span>
-          <div className="flex items-center gap-2">
-            <Button variant="neutral" size="sm" disabled>
-              Anterior
-            </Button>
-            <Button variant="neutral" size="sm" disabled>
-              Próxima
-            </Button>
-          </div>
+          {!isLoading && filteredClients.length > 0 && totalPages > 1 && (
+            <PaginationControls
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPrevious={() => setPage(currentPage - 1)}
+              onNext={() => setPage(currentPage + 1)}
+            />
+          )}
         </div>
       </section>
 
@@ -228,6 +259,29 @@ function StatusFilterMenu({
         className={cn(selected.length > 0 && "border-brand-emerald text-brand-emerald")}
       >
         Filtrar{selected.length > 0 ? ` (${selected.length})` : ""}
+      </Button>
+    </div>
+  );
+}
+
+function PaginationControls({
+  currentPage,
+  totalPages,
+  onPrevious,
+  onNext,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPrevious: () => void;
+  onNext: () => void;
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <Button variant="neutral" size="sm" onClick={onPrevious} disabled={currentPage <= 1}>
+        Anterior
+      </Button>
+      <Button variant="neutral" size="sm" onClick={onNext} disabled={currentPage >= totalPages}>
+        Próxima
       </Button>
     </div>
   );

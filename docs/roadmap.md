@@ -59,8 +59,9 @@ detalhe/premissa original quando existir.
       (`ownerName`/`city`/`capacityKwp`), ver `docs/dashboard-integrador.md`.
 - [x] Busca (tolerante a acento) e filtro por status reais na tabela/cards
       — client-side por enquanto, ver `docs/dashboard-integrador.md`.
-- [ ] Paginação de verdade (continua decorativa; o rodapé já mostra a
-      contagem real filtrada).
+- [x] Paginação real (client-side, `PAGE_SIZE = 10` em `ClientsPanel`) —
+      busca/filtro ainda não migraram pro servidor, ver
+      `docs/dashboard-integrador.md`.
 - [x] Rotas `/clientes` (busca/filtro/tabela dedicados, via `ClientsPanel`
       extraído do dashboard), `/portais` (lista de links por cliente) e
       `/configuracoes` (perfil + sair — o `/conta` do BottomNav mobile
@@ -95,8 +96,8 @@ detalhe/premissa original quando existir.
       (trap de foco/Tab/Escape), KPICard, SolvoLogo, ClientTableRow,
       ClientCard) e dos componentes de `src/components/dashboard/` que
       dependem do Convex (`NewClientModal`/`EditClientModal`, mockando
-      `useCreatePlant`/`useUpdatePlant`; `PortalLinkRow`). Ver
-      `docs/testing.md`. 108 testes no total.
+      `useCreatePlant`/`useUpdatePlant`; `PortalLinkRow`; a paginação de
+      `ClientsPanel`). Ver `docs/testing.md`. 113 testes no total.
 - [ ] E2E de fluxo completo (ex: Playwright) — lacuna consciente, ver
       `docs/testing.md`.
 - [ ] Observabilidade (erros, analytics de uso do portal).

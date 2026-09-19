@@ -59,9 +59,16 @@ escopados ao tenant autenticado — **não** mais os arrays de
   Convex. Funciona bem no volume atual; se a lista de clientes crescer
   muito, migrar pra filtro/busca no servidor (`convex/plants.ts::list`
   ganhando argumentos).
-- **Paginação continua decorativa**, mas o rodapé mostra a contagem real
-  (`Mostrando <filtrados> de <total>`) — os botões "Anterior"/"Próxima"
-  seguem sem função porque tudo cabe numa página só neste volume de dados.
+- **Paginação é real, mas client-side** (`PAGE_SIZE = 10` em `ClientsPanel`).
+  Os botões "Anterior"/"Próxima" navegam de fato, e o rodapé mostra
+  `Mostrando <início>–<fim> de <total>` (contando os itens já filtrados, não
+  o total de clientes do tenant). Com ≤10 resultados os controles somem
+  (não faz sentido paginar uma página só). A página exibida é *clampada*
+  (`Math.min(page, totalPages)`), não resetada por `useEffect`: se um filtro
+  reduzir o total de páginas, a página "desce" sozinha; ao remover o filtro,
+  a página anterior volta a valer — evita o padrão de reset via efeito que
+  este projeto já teve problema em outro lugar (ver o "congelamento" de
+  estado do fluxo de convite em `docs/login.md`).
 - **Navegação lateral e inferior 100% funcional.** "Painel", "Clientes",
   "Portais" e "Configurações"/"Conta" são todos `<Link>` de verdade — a
   flag `disabled` de `NavItem`/`TabItem` continua existindo em
@@ -133,9 +140,10 @@ escopados ao tenant autenticado — **não** mais os arrays de
 
 ## Próximos passos (fora do escopo desta etapa)
 
-- [ ] Paginação de verdade (útil quando o volume de clientes crescer).
-- [ ] Migrar busca/filtro pra query no servidor se o array de clientes
-      ficar grande demais pra filtrar no client.
+- [ ] Migrar busca/filtro/paginação pra query no servidor se o array de
+      clientes ficar grande demais pra carregar inteiro no client de uma vez
+      (hoje `useClients()` sempre traz todos os clientes do tenant; a
+      paginação da UI só corta o que já está em memória).
 - [ ] Editar `name` (usina), `status` e `alert` pela UI — `EditClientModal`
       só cobre `ownerName`/`city`/`capacityKwp` hoje.
 - [ ] `/configuracoes` ainda não permite editar nome/e-mail/senha — só

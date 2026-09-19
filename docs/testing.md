@@ -38,6 +38,7 @@ convex/invites.test.ts
 src/components/dashboard/NewClientModal.test.tsx
 src/components/dashboard/EditClientModal.test.tsx
 src/components/dashboard/PortalLinkRow.test.tsx
+src/components/dashboard/ClientsPanel.test.tsx
 ```
 
 - **Função pura sem dependência de banco/auth** (helpers em `src/lib/*` e
