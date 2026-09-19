@@ -61,6 +61,40 @@ mutations), rode `npx convex deploy` pra produção manualmente (como descrito
 acima) *antes ou junto* do push — senão o front em produção pode chamar uma
 função que ainda não existe no deployment de produção do Convex.
 
+### Preview deployments (por branch/PR)
+
+A mesma conexão Git que builda `main` automaticamente também builda uma
+**Preview Deployment** pra qualquer outra branch e pra qualquer Pull
+Request aberto no GitHub — isso é o comportamento padrão do app oficial do
+Vercel pra repositórios conectados (não precisou de nenhum passo extra além
+do `vercel git connect` já feito). O bot do Vercel comenta no PR com a URL
+do preview assim que o build termina.
+
+**Mas o app precisa de env vars do Convex pra funcionar em qualquer
+ambiente**, e antes só a env **Production** tinha
+`NEXT_PUBLIC_CONVEX_URL`/`NEXT_PUBLIC_CONVEX_SITE_URL` configuradas
+(`npx vercel env ls` mostrava só `Production`) — um preview build ia
+compilar, mas a página quebraria em runtime (`ConvexReactClient` sem URL).
+Corrigido apontando a env **Preview** pro deployment de **dev**
+(`perfect-hippopotamus-761`, o mesmo que `npx convex dev` usa localmente),
+não pro de produção — assim previews nunca leem/escrevem dados reais de
+clientes:
+
+```
+npx vercel env add NEXT_PUBLIC_CONVEX_URL preview       # https://perfect-hippopotamus-761.convex.cloud
+npx vercel env add NEXT_PUBLIC_CONVEX_SITE_URL preview  # https://perfect-hippopotamus-761.convex.site
+```
+
+O deployment de dev já tem o tenant de demonstração semeado (mesmos dados
+que aparecem rodando localmente), então um preview mostra o dashboard
+populado em vez de vazio. Login funciona normalmente (Password provider,
+sem redirect OAuth que dependa de `SITE_URL` bater com a URL do preview).
+
+Se o schema/queries do Convex mudarem, o deployment de **dev** já reflete a
+mudança assim que `npx convex dev` roda localmente (ou via `npx convex
+deploy` sem `--prod`) — os previews sempre usam esse mesmo deployment, não
+precisam de um passo de deploy separado por PR.
+
 ## Tenant de demonstração
 
 Rodar uma vez por deployment (idempotente — pode rodar de novo sem duplicar

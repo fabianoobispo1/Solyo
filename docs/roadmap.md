@@ -88,7 +88,11 @@ detalhe/premissa original quando existir.
 
 ## Fase 4 — Produção
 
-- [ ] Deploy contínuo (Vercel) com preview por PR.
+- [x] Deploy contínuo (Vercel) com preview por PR — já vinha de graça da
+      conexão Git (`vercel git connect`); faltava só a env **Preview** do
+      Convex, que não existia (só Production) e faria o preview quebrar em
+      runtime. Aponta pro deployment de dev, não pro de produção. Ver
+      `docs/backend-convex.md`.
 - [x] Testes automatizados do backend (Convex — isolamento entre tenants,
       cálculo de geração/economia), de utilitários puros (`src/lib`), de
       **todos** os componentes apresentacionais de `src/components/ui/`
