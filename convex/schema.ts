@@ -77,6 +77,22 @@ export default defineSchema({
   // Convite pra um novo integrador criar a própria conta em /convite/[token]
   // (ver convex/invites.ts). Criado só via CLI (`npx convex run
   // invites:create`) — não existe UI/admin panel pra gerar convite ainda.
+  // Pedido de acesso de quem entrou com Google sem ter conta (o cadastro é
+  // por convite). O usuário de auth existe, mas sem `profile` até o super
+  // admin aprovar (ver convex/accessRequests.ts).
+  accessRequests: defineTable({
+    authId: v.id("users"),
+    email: v.string(),
+    name: v.string(),
+    image: v.optional(v.string()),
+    status: v.union(v.literal("pending"), v.literal("approved"), v.literal("rejected")),
+    createdAt: v.number(),
+    decidedAt: v.optional(v.number()),
+    decidedBy: v.optional(v.id("profiles")),
+  })
+    .index("by_authId", ["authId"])
+    .index("by_status", ["status"]),
+
   invites: defineTable({
     email: v.string(),
     token: v.string(),

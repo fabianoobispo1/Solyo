@@ -8,10 +8,12 @@
  * @module
  */
 
+import type * as accessRequests from "../accessRequests.js";
 import type * as admin from "../admin.js";
 import type * as auth from "../auth.js";
 import type * as http from "../http.js";
 import type * as invites from "../invites.js";
+import type * as lib_admin from "../lib/admin.js";
 import type * as lib_generation from "../lib/generation.js";
 import type * as lib_tenant from "../lib/tenant.js";
 import type * as lib_tokens from "../lib/tokens.js";
@@ -27,10 +29,12 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  accessRequests: typeof accessRequests;
   admin: typeof admin;
   auth: typeof auth;
   http: typeof http;
   invites: typeof invites;
+  "lib/admin": typeof lib_admin;
   "lib/generation": typeof lib_generation;
   "lib/tenant": typeof lib_tenant;
   "lib/tokens": typeof lib_tokens;

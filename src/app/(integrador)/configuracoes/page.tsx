@@ -18,7 +18,7 @@ export default function ConfiguracoesPage() {
   const { signOut } = useAuthActions();
   const router = useRouter();
 
-  const isLoading = profile === undefined;
+  const isLoading = !profile;
 
   async function handleSignOut() {
     await signOut();

@@ -23,12 +23,15 @@ const tabs: TabItem[] = [
   { label: "Conta", href: "/configuracoes", icon: <AccountIcon size={22} /> },
 ];
 
-export function BottomNav() {
+const accessTab: TabItem = { label: "Acessos", href: "/admin/acessos", icon: <UsersIcon size={22} /> };
+
+export function BottomNav({ isSuperAdmin = false }: { isSuperAdmin?: boolean }) {
   const pathname = usePathname();
+  const items = isSuperAdmin ? [...tabs.slice(0, 3), accessTab, tabs[3]] : tabs;
 
   return (
     <nav className="fixed inset-x-0 bottom-0 z-40 flex h-16 items-center justify-around border-t border-neutral-border bg-neutral-surface md:hidden">
-      {tabs.map((tab) => (
+      {items.map((tab) => (
         <Tab key={tab.href} tab={tab} active={pathname === tab.href} />
       ))}
     </nav>

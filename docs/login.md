@@ -51,8 +51,22 @@ fluxo manualmente (ver premissas abaixo) — não são só estilo de código.
 
 ## Premissas assumidas nesta implementação
 
-- **Só e-mail/senha.** O botão "Continuar com Google" continua `disabled`,
-  puramente visual — não há provider OAuth configurado em `convex/auth.ts`.
+- **E-mail/senha + Google, cadastro fechado.** "Continuar com Google"
+  (`signIn("google")`) funciona assim (`createOrUpdateUser` em
+  `convex/auth.ts`):
+  - e-mail já existe (conta criada por convite) → vincula e entra;
+  - e-mail é o do **super admin** (`SUPER_ADMIN_EMAIL` em
+    `convex/lib/admin.ts`, fixo no código) → cria a conta direto;
+  - qualquer outro → cria o usuário **sem profile** + um `accessRequest`
+    pendente e o `(integrador)/layout` manda pra `/acesso-pendente` (tela
+    amigável, "solicitação enviada"). O super admin vê a fila em
+    `/admin/acessos` (item "Acessos" na Sidebar, com contador) e aprova/recusa
+    (`convex/accessRequests.ts`). Aprovar cria o profile `integrador_admin`; a
+    tela de pendente redireciona sozinha pro painel (reativo).
+  Exige `AUTH_GOOGLE_ID`/`AUTH_GOOGLE_SECRET` em cada deployment do Convex e
+  a URI `<CONVEX_SITE_URL>/api/auth/callback/google` autorizada no Google Cloud.
+  Sem fila de notificação por e-mail ainda — o super admin só vê o pedido ao
+  abrir o site.
 - **Convites são token-only, sem UI de admin.** Só dá pra criar um via CLI
   (`npx convex run invites:create`). O e-mail do convite fica travado no
   formulário (`<Input value={email} disabled readOnly>`), mas isso é só

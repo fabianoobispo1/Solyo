@@ -28,10 +28,7 @@ export default function LoginPage() {
         <span className="h-px flex-1 bg-neutral-border" />
       </div>
 
-      <Button variant="neutral" size="lg" type="button" className="w-full gap-2.5" disabled>
-        <GoogleIcon />
-        Continuar com Google
-      </Button>
+      <GoogleButton />
 
       <p className="text-center font-body text-sm text-neutral-secondary">
         Ainda não tem conta?{" "}
@@ -106,6 +103,28 @@ function LoginForm() {
         {submitting ? "Entrando…" : "Entrar"}
       </Button>
     </form>
+  );
+}
+
+function GoogleButton() {
+  const { signIn } = useAuthActions();
+  const [redirecting, setRedirecting] = useState(false);
+
+  return (
+    <Button
+      variant="neutral"
+      size="lg"
+      type="button"
+      className="w-full gap-2.5"
+      disabled={redirecting}
+      onClick={() => {
+        setRedirecting(true);
+        signIn("google", { redirectTo: "/dashboard" }).catch(() => setRedirecting(false));
+      }}
+    >
+      <GoogleIcon />
+      Continuar com Google
+    </Button>
   );
 }
 

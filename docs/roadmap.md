@@ -136,6 +136,9 @@ detalhe/premissa original quando existir.
       de sujeira acumulada. Parâmetros da fórmula (%/dia, teto) configuráveis
       por tenant em `/configuracoes`. Ver `docs/portal-cliente.md`,
       `docs/backend-convex.md` e `docs/dashboard-integrador.md`.
+- [x] Login com Google com cadastro fechado: quem não tem conta gera uma
+      solicitação que o super admin (`fbc623@gmail.com`) aprova em
+      `/admin/acessos`. Ver `docs/login.md`.
 - [ ] Notificações quando a geração cair abaixo do esperado (o `alert` de
       `Client`/`ClientPortalData` já modela esse estado).
 - [ ] Exportação de relatórios (PDF/CSV) para o integrador e para o cliente.

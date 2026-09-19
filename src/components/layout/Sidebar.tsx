@@ -4,6 +4,8 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ReactNode, useState } from "react";
 import { useAuthActions } from "@convex-dev/auth/react";
+import { useQuery } from "convex/react";
+import { api } from "../../../convex/_generated/api";
 import { cn } from "@/lib/cn";
 import { getAvatarGradient, getInitials } from "@/lib/avatar";
 import { SolvoLogo } from "@/components/ui/SolvoLogo";
@@ -32,10 +34,19 @@ const settingsItem: NavItem = {
 export interface SidebarProps {
   userName: string;
   userRole: string;
+  isSuperAdmin?: boolean;
 }
 
-export function Sidebar({ userName, userRole }: SidebarProps) {
+const accessItem: NavItem = {
+  label: "Acessos",
+  href: "/admin/acessos",
+  icon: <UsersIcon />,
+};
+
+export function Sidebar({ userName, userRole, isSuperAdmin = false }: SidebarProps) {
   const pathname = usePathname();
+  const requests = useQuery(api.accessRequests.list, isSuperAdmin ? {} : "skip");
+  const pendingCount = requests?.filter((r) => r.status === "pending").length ?? 0;
 
   return (
     <aside className="hidden h-screen w-[220px] shrink-0 flex-col border-r border-neutral-border bg-neutral-surface md:flex">
@@ -48,6 +59,10 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
           <NavLink key={item.href} item={item} active={pathname === item.href} />
         ))}
 
+        {isSuperAdmin && (
+          <NavLink item={accessItem} active={pathname === accessItem.href} badge={pendingCount} />
+        )}
+
         <div className="my-2 border-t border-neutral-border-md" />
 
         <NavLink item={settingsItem} active={pathname === settingsItem.href} />
@@ -58,7 +73,7 @@ export function Sidebar({ userName, userRole }: SidebarProps) {
   );
 }
 
-function UserMenu({ userName, userRole }: SidebarProps) {
+function UserMenu({ userName, userRole }: Pick<SidebarProps, "userName" | "userRole">) {
   const [open, setOpen] = useState(false);
   const { signOut } = useAuthActions();
   const router = useRouter();
@@ -117,7 +132,7 @@ function UserMenu({ userName, userRole }: SidebarProps) {
   );
 }
 
-function NavLink({ item, active }: { item: NavItem; active: boolean }) {
+function NavLink({ item, active, badge = 0 }: { item: NavItem; active: boolean; badge?: number }) {
   const className = cn(
     "flex items-center gap-2.5 rounded-btn px-3 py-2.5 font-body text-sm transition-colors",
     active
@@ -143,6 +158,11 @@ function NavLink({ item, active }: { item: NavItem; active: boolean }) {
     <Link href={item.href} className={className}>
       {item.icon}
       {item.label}
+      {badge > 0 && (
+        <span className="ml-auto rounded-full bg-brand-amber px-1.5 py-0.5 font-body text-[10px] font-semibold text-white">
+          {badge}
+        </span>
+      )}
     </Link>
   );
 }
