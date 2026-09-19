@@ -72,6 +72,7 @@ export function ClientTableRow({
             <Link
               href={portalHref}
               target="_blank"
+              rel="noopener noreferrer"
               className="inline-flex h-[38px] items-center justify-center rounded-btn border border-brand-emerald px-4 font-body text-sm font-medium text-brand-emerald hover:bg-brand-emerald/5"
             >
               Ver portal

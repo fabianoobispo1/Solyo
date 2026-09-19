@@ -87,6 +87,7 @@ export function ClientCard({
           <Link
             href={portalHref}
             target="_blank"
+            rel="noopener noreferrer"
             className="inline-flex h-9 flex-1 items-center justify-center rounded-btn border border-brand-emerald font-body text-sm font-medium text-brand-emerald"
           >
             Ver portal

@@ -178,6 +178,7 @@ function LinkButton({
     <Link
       href={href}
       target={target}
+      rel={target === "_blank" ? "noopener noreferrer" : undefined}
       className={cn(
         "inline-flex h-[54px] w-full items-center justify-center gap-2 rounded-btn px-7 text-base tracking-[-0.2px] transition-colors sm:w-auto",
         linkButtonVariants[variant]

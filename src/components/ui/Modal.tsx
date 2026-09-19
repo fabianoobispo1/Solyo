@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect } from "react";
+import { ReactNode, useEffect, useRef } from "react";
 import { cn } from "@/lib/cn";
 
 export interface ModalProps {
@@ -11,16 +11,53 @@ export interface ModalProps {
   className?: string;
 }
 
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])';
+
 export function Modal({ open, onClose, title, children, className }: ModalProps) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const previouslyFocusedRef = useRef<HTMLElement | null>(null);
+
+  // Move o foco pro modal ao abrir e devolve pro elemento que abriu (o
+  // gatilho, ex: o botão "···") ao fechar — sem isso, quem navega por
+  // teclado perde a posição do foco quando o modal fecha.
   useEffect(() => {
     if (!open) return;
 
+    previouslyFocusedRef.current = document.activeElement as HTMLElement | null;
+    const firstFocusable = dialogRef.current?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR);
+    (firstFocusable ?? dialogRef.current)?.focus();
+
     function handleKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+
+      if (event.key !== "Tab" || !dialogRef.current) return;
+
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
+      );
+      if (focusable.length === 0) return;
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      previouslyFocusedRef.current?.focus();
+    };
   }, [open, onClose]);
 
   if (!open) return null;
@@ -32,12 +69,14 @@ export function Modal({ open, onClose, title, children, className }: ModalProps)
       className="fixed inset-0 z-50 flex items-center justify-center bg-neutral-heading/40 px-4"
     >
       <div
+        ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
+        tabIndex={-1}
         onClick={(event) => event.stopPropagation()}
         className={cn(
-          "w-full max-w-md rounded-modal bg-neutral-surface p-6 shadow-xl",
+          "w-full max-w-md rounded-modal bg-neutral-surface p-6 shadow-xl outline-none",
           className
         )}
       >

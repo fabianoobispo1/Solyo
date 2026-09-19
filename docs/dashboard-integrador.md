@@ -88,7 +88,10 @@ escopados ao tenant autenticado — **não** mais os arrays de
   cliente — o campo `plants.name` recebe `Usina de ${ownerName}` como
   padrão (ver `docs/backend-convex.md`). `Modal`
   (`src/components/ui/Modal.tsx`) é o shell genérico (overlay, `Esc` fecha,
-  clique fora fecha) reutilizável para outros modais futuros.
+  clique fora fecha, foco preso dentro do modal via Tab e devolvido pro
+  gatilho ao fechar — testado manualmente via teclado, sem teste
+  automatizado ainda, ver `docs/testing.md`) reutilizável para outros
+  modais futuros.
 - **Mobile é a mesma rota `/dashboard`, não uma página separada.** A troca
   entre a composição desktop (Sidebar + Topbar + tabela) e a mobile
   (MobileHeader + BottomNav + `ClientCard` list) é só CSS — ambas as árvores
