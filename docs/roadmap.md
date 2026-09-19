@@ -87,10 +87,14 @@ detalhe/premissa original quando existir.
 
 - [ ] Deploy contínuo (Vercel) com preview por PR.
 - [x] Testes automatizados do backend (Convex — isolamento entre tenants,
-      cálculo de geração/economia) e de utilitários puros (`src/lib`). Ver
-      `docs/testing.md`.
-- [ ] Testes de componentes React e/ou E2E (nenhum configurado ainda —
-      documentado como lacuna consciente em `docs/testing.md`).
+      cálculo de geração/economia), de utilitários puros (`src/lib`) e dos
+      componentes apresentacionais de `src/components/ui/` (Vitest +
+      Testing Library — Button, StatusBadge, Input, `Modal`, este último
+      cobrindo o trap de foco/Tab/Escape). Ver `docs/testing.md`. 72 testes
+      no total.
+- [ ] Testes dos componentes que dependem do Convex
+      (`src/components/dashboard/`) e E2E de fluxo completo (ex:
+      Playwright) — lacuna consciente, ver `docs/testing.md`.
 - [ ] Observabilidade (erros, analytics de uso do portal).
 - [ ] Revisão de segurança do portal público (rate limiting, enumeração de
       tokens).

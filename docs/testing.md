@@ -22,6 +22,11 @@ testa**, não uma pasta `__tests__/` separada. Já existe:
 ```
 src/lib/cn.test.ts
 src/lib/avatar.test.ts
+src/lib/text.test.ts
+src/components/ui/Button.test.tsx
+src/components/ui/StatusBadge.test.tsx
+src/components/ui/Input.test.tsx
+src/components/ui/Modal.test.tsx
 convex/lib/generation.test.ts
 convex/lib/tenant.test.ts
 convex/plants.test.ts
@@ -31,6 +36,8 @@ convex/invites.test.ts
 - **Função pura sem dependência de banco/auth** (helpers em `src/lib/*` e
   `convex/lib/*`, como `cn`, `getAvatarGradient`, `estimateDailyKwh`) → teste
   direto, sem `convex-test`, só `describe`/`it`/`expect` do Vitest.
+- **Componente React em `src/components/ui/*`** (a vitrine de componentes
+  base do `DESIGN.md`) → Testing Library + `.test.tsx`, ver seção abaixo.
 - **Query/mutation do Convex** (qualquer coisa em `convex/*.ts` que recebe
   `ctx`) → usa `convex-test` (ver `convex/plants.test.ts` como referência).
   Nunca teste essas funções chamando a API HTTP de um deployment real.
@@ -61,6 +68,35 @@ Pra testar uma `action` (que não acessa `ctx.db` diretamente, só via
 `ctx.runQuery`/`ctx.runMutation`), use `t.action(api.<modulo>.<nome>, args)`
 — ver `convex/invites.test.ts` testando `invites.accept`.
 
+## Testando componentes React com Testing Library
+
+```tsx
+// @vitest-environment jsdom
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, expect, it, vi } from "vitest";
+import { Button } from "./Button";
+```
+
+O ambiente padrão do projeto (`vitest.config.mts`) é `edge-runtime`, porque
+os testes de `convex/*` precisam dele. Testes de componente precisam de DOM
+de verdade, então cada arquivo `*.test.tsx` de componente começa com o
+comentário `// @vitest-environment jsdom` — é isso que troca o ambiente só
+pra aquele arquivo, sem mexer na config global.
+
+`vitest.setup.ts` já registra `@testing-library/jest-dom` (matchers como
+`toBeInTheDocument`/`toHaveFocus`) e chama `cleanup()` depois de cada teste
+— sem isso, o DOM de um teste vaza pro próximo e quebra
+`getByRole`/`getByText` (mais de um elemento encontrado). Não precisa
+repetir esse setup nos arquivos de teste.
+
+Prefira `@testing-library/user-event` a `fireEvent` pra simular interação
+(clique, digitação, `Tab`, `Escape`) — ele se aproxima mais do que um
+usuário real faz (dispara a sequência certa de eventos, respeita
+`disabled`, etc.). `fireEvent` ainda é útil pra disparar um evento
+específico direto num elemento (ex: clicar no backdrop do `Modal`, que não
+tem role/texto pra selecionar via `user-event`).
+
 ## O que é obrigatório testar ao mexer em `convex/plants.ts` (ou schema)
 
 **Isolamento entre tenants é a regra inegociável do projeto** (ver
@@ -81,11 +117,15 @@ do mesmo tenant.
 
 ## O que não está coberto ainda
 
-- Componentes React (`src/components/**`) — sem testes de renderização
-  ainda (nenhum Testing Library configurado). Se isso mudar, documentar a
-  escolha aqui.
+- **Componentes que dependem do Convex** (`ClientTableRow`/`ClientCard`
+  ainda não, `NewClientModal`/`EditClientModal`, tudo em
+  `src/components/dashboard/`) — testá-los exige mockar `useQuery`/
+  `useMutation`/`useAuthActions`, o que essa etapa não cobriu. Só os
+  componentes puramente apresentacionais de `src/components/ui/` (Button,
+  StatusBadge, Input, Modal) têm teste até aqui.
 - `src/lib/data/*` (os hooks) — são wrappers finos de `useQuery`/`useMutation`
   do Convex; a cobertura real está nas funções Convex por trás deles.
-- Rotas Next (`src/app/**`) — sem teste de integração/E2E (ex: Playwright).
-  A verificação end-to-end até aqui foi manual via browser (login real +
-  criar cliente + abrir `/c/[token]`, documentado no histórico do projeto).
+- Rotas Next inteiras (`src/app/**`) — sem teste de integração/E2E (ex:
+  Playwright). A verificação end-to-end até aqui foi manual via browser
+  (login real + criar cliente + abrir `/c/[token]`, documentado no
+  histórico do projeto).
