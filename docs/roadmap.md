@@ -22,10 +22,12 @@ o doc com o detalhe/premissa original quando existir.
 - Backend Convex com isolamento entre tenants coberto por testes
   automatizados (Vitest + `convex-test`). Ver `docs/backend-convex.md` e
   `docs/testing.md`.
-- Publicado no Vercel — **atenção:** o deployment do Vercel ainda não tem as
-  variáveis `NEXT_PUBLIC_CONVEX_URL`/`NEXT_PUBLIC_CONVEX_SITE_URL` nem o
-  Convex Auth configurado num deployment de produção; o app publicado hoje
-  ainda reflete a versão anterior (só mock). Ver "Próximo deploy" abaixo.
+- Publicado no Vercel (`https://solyo-pearl.vercel.app`) já apontando para
+  um deployment de **produção** do Convex (`fine-albatross-963`), com
+  `JWT_PRIVATE_KEY`/`JWKS`/`SITE_URL` configurados e o tenant de
+  demonstração "Aurora Solar" semeado lá. Login, dashboard e `/c/[token]`
+  testados manualmente em produção. Ver `docs/backend-convex.md` para como
+  repetir esse setup (ex: se o deployment for recriado).
 
 ## Fase 1 — Completar as telas do `DESIGN.md`
 
@@ -80,12 +82,13 @@ o doc com o detalhe/premissa original quando existir.
 - [ ] Observabilidade (erros, analytics de uso do portal).
 - [ ] Revisão de segurança do portal público (rate limiting, enumeração de
       tokens).
-- [ ] **Próximo deploy:** publicar um deployment de produção do Convex
-      (`npx convex deploy`), repetir o setup de
-      `JWT_PRIVATE_KEY`/`JWKS`/`SITE_URL` nele (`docs/backend-convex.md`),
-      apontar `NEXT_PUBLIC_CONVEX_URL`/`NEXT_PUBLIC_CONVEX_SITE_URL` do
-      Vercel pra esse deployment, e rodar o seed de demonstração lá (ou um
-      seed de produção de verdade).
+- [x] Deployment de produção do Convex publicado, com env vars e seed de
+      demonstração — ver `docs/backend-convex.md`.
+- [ ] `vercel git connect` para deploy automático a cada push (hoje o deploy
+      pro Vercel é manual via `npx vercel --prod`).
+- [ ] Trocar o tenant de demonstração por um processo real de onboarding de
+      integrador (o seed foi pensado só pra popular o ambiente, não é como
+      contas de produção de verdade serão criadas).
 
 ## Fase 5 — Produto (fora do escopo do `DESIGN.md` atual)
 

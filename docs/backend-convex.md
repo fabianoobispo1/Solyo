@@ -32,12 +32,32 @@ src/lib/data/                            # hooks tipados que as páginas consome
 3. Acesse `http://localhost:3000/login` com as credenciais de demonstração
    abaixo.
 
+## Produção
+
+O app publicado em `https://solyo-pearl.vercel.app` já roda contra um
+deployment de **produção** do Convex (`fine-albatross-963`, projeto
+`fabiano-bispo:solyo`), separado do deployment de dev
+(`perfect-hippopotamus-761`) — cada um com seu próprio
+`JWT_PRIVATE_KEY`/`JWKS` (ver seção acima) e seu próprio tenant de
+demonstração semeado. `NEXT_PUBLIC_CONVEX_URL`/`NEXT_PUBLIC_CONVEX_SITE_URL`
+estão configurados como env vars de **Production** no projeto Vercel
+(`npx vercel env ls production`).
+
+Para deployar funções novas pra produção sem passar pelo prompt interativo
+(útil em automação): gere uma deploy key temporária
+(`npx convex deployment token create <nome> --prod`), rode
+`CONVEX_DEPLOY_KEY='<key>' npx convex deploy` e depois revogue a key
+(`npx convex deployment token delete <nome> --prod`) — não deixe uma deploy
+key viva sem necessidade.
+
 ## Tenant de demonstração
 
-Rodar uma vez (idempotente — pode rodar de novo sem duplicar nada):
+Rodar uma vez por deployment (idempotente — pode rodar de novo sem duplicar
+nada):
 
 ```
-npx convex run seed:seedDemoTenant
+npx convex run seed:seedDemoTenant            # no deployment de dev
+CONVEX_DEPLOY_KEY='<key>' npx convex run seed:seedDemoTenant  # em produção
 ```
 
 Cria o login do integrador **Aurora Solar**:
@@ -153,7 +173,9 @@ UI não precisou mudar, só a fonte dos dados.
 - [ ] Busca/filtro/paginação reais no dashboard.
 - [ ] Guardar uma cor/logo por tenant e aplicar em `/c/[token]` (ou
       descontinuar `/portal/[slug]` quando isso existir).
-- [ ] `npx convex deploy` para um deployment de produção + repetir o setup
-      de `JWT_PRIVATE_KEY`/`JWKS`/`SITE_URL` lá.
+- [x] Deployment de produção do Convex publicado (ver seção "Produção"
+      acima).
+- [ ] Deploy automático a cada push (`vercel git connect`) — hoje o deploy
+      pro Vercel é manual via `npx vercel --prod`.
 - [ ] Decidir se o cliente final (`role: "cliente_final"`) um dia loga; hoje
       `clientProfileId` existe no schema mas nunca é preenchido.
