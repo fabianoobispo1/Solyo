@@ -6,7 +6,6 @@ import { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 import { getAvatarGradient, getInitials } from "@/lib/avatar";
 import { SolvoLogo } from "@/components/ui/SolvoLogo";
-import { mockIntegratorUser } from "@/lib/mock-data";
 import { ChevronDownIcon, GlobeIcon, GridIcon, SettingsIcon, UsersIcon } from "@/components/layout/nav-icons";
 
 interface NavItem {
@@ -30,7 +29,12 @@ const settingsItem: NavItem = {
   disabled: true,
 };
 
-export function Sidebar() {
+export interface SidebarProps {
+  userName: string;
+  userRole: string;
+}
+
+export function Sidebar({ userName, userRole }: SidebarProps) {
   const pathname = usePathname();
 
   return (
@@ -57,17 +61,17 @@ export function Sidebar() {
           <div
             className={cn(
               "flex h-[34px] w-[34px] shrink-0 items-center justify-center rounded-avatar bg-gradient-to-br font-display text-xs font-semibold text-white",
-              getAvatarGradient(mockIntegratorUser.name)
+              getAvatarGradient(userName)
             )}
           >
-            {getInitials(mockIntegratorUser.name)}
+            {getInitials(userName)}
           </div>
           <div className="flex min-w-0 flex-1 flex-col">
             <span className="truncate font-body text-sm font-medium text-neutral-heading">
-              {mockIntegratorUser.name}
+              {userName}
             </span>
             <span className="truncate font-body text-xs text-neutral-secondary">
-              {mockIntegratorUser.role}
+              {userRole}
             </span>
           </div>
           <span className="text-neutral-secondary">

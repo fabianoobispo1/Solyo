@@ -3,7 +3,8 @@
 Implementação do layout descrito em `DESIGN.md` §4.1 (Login — Web). Esse
 item não estava no checklist original do `DESIGN.md` (§6) — foi identificado
 como lacuna ao comparar a implementação com os mockups de referência e
-adicionado ao `docs/roadmap.md`.
+adicionado ao `docs/roadmap.md`. **Autentica de verdade** desde a integração
+com Convex Auth — ver `docs/backend-convex.md`.
 
 ## Estrutura de arquivos
 
@@ -11,36 +12,40 @@ adicionado ao `docs/roadmap.md`.
 src/app/login/page.tsx   # Painel de marca (dark) + painel de formulário (branco)
 ```
 
-Rota pública, fora do grupo `(integrador)` e fora de `portal/`. Usa apenas o
-`layout.tsx` raiz (fontes globais).
+Rota pública, fora do grupo `(integrador)` e fora de `portal/`/`c/`. Usa
+apenas o `layout.tsx` raiz (fontes globais + `ConvexClientProvider`).
+
+## Como funciona
+
+`LoginForm` (dentro do próprio `page.tsx`) é um Client Component que chama
+`useAuthActions().signIn("password", formData)` do `@convex-dev/auth/react`,
+com `flow: "signIn"`. Em caso de sucesso, `router.push("/dashboard")`; em
+caso de erro, mostra "E-mail ou senha incorretos." no campo de senha
+(reaproveitando a prop `error` que `<Input>` já suportava). Não há signup
+pela UI — contas de integrador são criadas via seed/console do Convex neste
+MVP (ver credenciais de demonstração em `docs/backend-convex.md`).
 
 ## Premissas assumidas nesta implementação
 
-- **Não autentica.** Não há `<form>` com submit, nem chamada a nenhuma API de
-  auth. Os botões "Entrar" e "Continuar com Google" são `type="button"` sem
-  `onClick` — puramente visuais, seguindo o mesmo padrão de placeholders já
-  usado no dashboard (busca, filtro, paginação).
-- **Página é um Server Component.** Não precisa de estado/interatividade
-  ainda porque não valida nem envia nada; quando a autenticação real entrar,
-  provavelmente vira Client Component (ou usa Server Actions) para tratar o
-  submit e erros.
-- **"Fale com a Solyo"** aparece como texto não clicável (com `title` de
-  tooltip), não como link — ainda não existe um canal de contato definido
-  (e-mail, WhatsApp, formulário) para apontar.
-- **Textos de marketing (tagline, estatísticas +2.400/98%/R$4M) são
-  placeholders** copiados da estrutura do `DESIGN.md` — não são números reais
-  de produto, precisam ser validados/atualizados pelo time antes de ir ao ar.
-- **Botão "Continuar com Google" é só visual.** Não há integração OAuth; se o
-  produto adotar login social, isso precisa de um provedor real (NextAuth,
-  Clerk, etc.) e de decisão sobre quais provedores oferecer.
+- **Só e-mail/senha.** O botão "Continuar com Google" continua `disabled`,
+  puramente visual — não há provider OAuth configurado em `convex/auth.ts`.
+- **Sem tela de cadastro.** "Fale com a Solyo" continua um texto não
+  clicável (com `title` de tooltip) — o produto ainda não definiu um canal
+  de contato nem se o cadastro será self-serve.
+- **Textos de marketing (tagline, estatísticas +2.400/98%/R$4M) continuam
+  placeholders** copiados da estrutura do `DESIGN.md` — não são números
+  reais de produto, precisam ser validados/atualizados pelo time antes de ir
+  ao ar.
+- **Erro de login é genérico** ("E-mail ou senha incorretos.") — não
+  distingue "e-mail não existe" de "senha errada", de propósito (evita
+  enumeração de contas).
 
 ## Próximos passos (fora do escopo desta etapa)
 
-- [ ] Definir e implementar o provedor de autenticação (credenciais, OAuth,
-      magic link) e ligar o formulário a ele.
-- [ ] Proteger o grupo `(integrador)` com a sessão criada aqui — hoje
-      `/dashboard` é público mesmo com o login existindo.
-- [ ] Validação de formulário (e-mail obrigatório, mensagens de erro usando o
-      estado `error` que `<Input>` já suporta).
+- [ ] Cadastro self-serve de integrador (hoje só existe via seed/console do
+      Convex).
+- [ ] Login social (Google) se o produto decidir oferecer.
+- [ ] Validação de formulário mais rica (força de senha, feedback inline
+      antes do submit).
 - [ ] Definir o canal real de "Fale com a Solyo" e trocar o texto por um link.
 - [ ] Confirmar com produto/marketing os números da coluna de estatísticas.

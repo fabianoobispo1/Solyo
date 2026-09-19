@@ -16,36 +16,42 @@ src/components/layout/nav-icons.tsx     # Ícones SVG compartilhados por Sidebar
 src/components/ui/ClientTableRow.tsx    # Linha da tabela desktop (spec §3 <ClientTableRow>)
 src/components/ui/ClientCard.tsx        # Card da lista mobile (spec §3 <ClientCard>)
 src/components/ui/Modal.tsx             # Shell genérico de modal (overlay + rounded-modal)
-src/components/dashboard/NewClientModal.tsx # Botão "+ Novo cliente" + modal de cadastro (mock)
-src/lib/mock-data.ts                    # Dados mocados (clientes + KPIs agregados)
+src/components/dashboard/NewClientModal.tsx # Botão "+ Novo cliente" + modal de cadastro (Convex)
+src/lib/data/useClients.ts              # Hook: lista de clientes do tenant logado
+src/lib/data/useKpis.ts                 # Hook: KPIs agregados do tenant logado
+src/lib/data/useCurrentProfile.ts       # Hook: nome/e-mail do integrador logado (saudação)
+src/lib/data/usePlantMutations.ts       # Hooks: criar/editar cliente
+src/lib/mock-data.ts                    # Só os TIPOS (Client, DashboardKpis) — arrays não são mais usados aqui
 src/lib/avatar.ts                       # Iniciais + gradiente determinístico por nome
 ```
 
 A rota pública `/` continua sendo a vitrine dos componentes base (`Button`,
 `StatusBadge`, `Input`, `KPICard`, `SolvoLogo`); o dashboard vive em `/dashboard`
-dentro do grupo de rotas `(integrador)`.
+dentro do grupo de rotas `(integrador)`, protegido por login.
 
-## Dados mocados
+## Dados
 
-`src/lib/mock-data.ts` exporta `mockClients` (5 clientes fictícios cobrindo os
-status `online`, `alert` e `offline`) e `mockDashboardKpis` (métricas agregadas
-do topo do dashboard). Não há chamada de rede — os componentes de página
-importam esses arrays diretamente.
+Desde a integração com Convex (ver `docs/backend-convex.md`), esta página
+usa `useClients()`/`useKpis()`, que chamam `convex/plants.ts::list`/`::kpis`
+escopados ao tenant autenticado — **não** mais os arrays de
+`src/lib/mock-data.ts`. Esse arquivo continua existindo só pelos *tipos*
+(`Client`, `DashboardKpis`), que os hooks reais devolvem exatamente iguais
+(por isso a UI não precisou mudar).
 
 ## Premissas assumidas nesta implementação
 
-- **Sem autenticação/autorização.** O grupo `(integrador)` não tem nenhum
-  guard; qualquer um que acesse `/dashboard` vê o painel. Antes de produção é
-  preciso um middleware/`layout` que verifique sessão e redirecione para login.
-- **Sem fonte de dados real.** `mock-data.ts` substitui a futura camada de
-  API/DB. O formato de `Client` foi desenhado para mapear 1:1 com o que a API
-  deve retornar, mas nenhum contrato de API foi definido ainda.
+- **Autenticação é real.** `(integrador)/layout.tsx` é um Client Component
+  que usa `useConvexAuth()` e redireciona pra `/login` se não autenticado
+  (mesmo padrão do projeto de referência `zapeio`). Ver `docs/backend-convex.md`.
+- **Dados vêm do Convex**, escopados ao tenant logado (`requireTenant` +
+  `assertSameTenant` — isolamento coberto por testes, ver `docs/testing.md`).
 - **Busca e filtro são apenas visuais.** O campo de busca e o botão "Filtrar"
-  no cabeçalho da tabela não filtram `mockClients` — precisam de estado
-  (client component) ou de query params + busca no servidor.
-- **Paginação é decorativa.** Os botões "Anterior"/"Próxima" não paginam nada;
-  o rodapé mostra "1–5 de 248" como referência visual do layout, não como dado
-  real.
+  no cabeçalho da tabela não filtram o resultado de `useClients()` — precisam
+  de estado local ou de um parâmetro na query do Convex.
+- **Paginação é decorativa**, mas o rodapé agora mostra a contagem real
+  (`Mostrando N de N`, sem um "total maior" fictício) — os botões
+  "Anterior"/"Próxima" continuam sem função porque tudo cabe numa página só
+  neste volume de dados.
 - **Navegação lateral parcial.** Apenas "Painel" (`/dashboard`) é um link
   funcional. "Clientes", "Portais" e "Configurações" aparecem no design mas
   suas rotas ainda não existem — foram renderizados como itens desabilitados
@@ -56,22 +62,23 @@ importam esses arrays diretamente.
   dia`/`Boa tarde`), para evitar prender o texto ao horário de build em uma
   página estática. Se a página passar a ser dinâmica (com dados de sessão),
   reavaliar.
-- **"Ver portal" já linka para `/portal/[slug]`** (ver
-  `docs/portal-cliente.md`) quando o `Client` mocado tem `slug`; sem `slug`
-  o link aparece desabilitado. O menu "···" ainda não tem handler — é um
-  placeholder visual.
+- **"Ver portal" linka para `/c/[portalToken]`** (a rota pública real, ver
+  `docs/portal-cliente.md`) — todo `plant` criado por este dashboard já tem
+  um `portalToken`, então o link sempre fica ativo para clientes cadastrados
+  por aqui. O menu "···" ainda não tem handler — é um placeholder visual
+  (a mutation de edição já existe e está testada, ver `docs/backend-convex.md`).
 - **Ícones da sidebar são SVGs escritos à mão**, sem dependência de ícones
   externa, seguindo a mesma linha do `BarChart` inline citado no `DESIGN.md`
   (§4 "sem lib externa para o MVP").
 - **Gradiente de avatar é determinístico por hash do nome** (`src/lib/avatar.ts`),
   não aleatório — o mesmo cliente sempre recebe a mesma cor entre renders.
-- **O modal "Novo cliente" não persiste nada.** `NewClientModal` (`src/components/
-  dashboard/NewClientModal.tsx`) é um Client Component com estado local; ao
-  submeter, só mostra uma tela de confirmação mock — não chama API, não
-  adiciona linha em `mockClients` nem valida além do `required` nativo do
-  `<input>`. `Modal` (`src/components/ui/Modal.tsx`) é o shell genérico
-  (overlay, `Esc` fecha, clique fora fecha) reutilizável para outros modais
-  futuros.
+- **O modal "Novo cliente" persiste de verdade** via `useCreatePlant()`
+  (`convex/plants.ts::create`). Não valida além do `required` nativo do
+  `<input>`. O formulário não coleta um nome de usina separado do nome do
+  cliente — o campo `plants.name` recebe `Usina de ${ownerName}` como
+  padrão (ver `docs/backend-convex.md`). `Modal`
+  (`src/components/ui/Modal.tsx`) é o shell genérico (overlay, `Esc` fecha,
+  clique fora fecha) reutilizável para outros modais futuros.
 - **Mobile é a mesma rota `/dashboard`, não uma página separada.** A troca
   entre a composição desktop (Sidebar + Topbar + tabela) e a mobile
   (MobileHeader + BottomNav + `ClientCard` list) é só CSS — ambas as árvores
@@ -92,17 +99,14 @@ importam esses arrays diretamente.
 
 ## Próximos passos (fora do escopo desta etapa)
 
-- [ ] Autenticação real + proteção de rota no grupo `(integrador)` — a
-      página `/login` (ver `docs/login.md`) já existe, mas não está ligada a
-      nenhuma sessão/redirecionamento ainda.
-- [ ] Substituir `mock-data.ts` por chamadas a uma API/DB real.
 - [ ] Tornar busca, filtro e paginação da tabela funcionais.
-- [ ] Conectar o submit do `NewClientModal` a uma mutação real (hoje só
-      mostra a confirmação mock).
+- [ ] Conectar o menu "···" a um fluxo de edição (`useUpdatePlant` já existe
+      e está testado — falta só a UI).
 - [ ] Página `/clientes`, `/portais`, `/configuracoes`/`/conta` e ativar os
       links correspondentes na Sidebar e no BottomNav.
-- [ ] Testes (unitários dos componentes `ui/` e de integração da página do
-      dashboard, incluindo os dois breakpoints).
+- [ ] Testes de componentes React (`ui/`) e de integração da página do
+      dashboard — hoje a cobertura automatizada é do backend (Convex) e dos
+      utilitários puros, ver `docs/testing.md`.
 - [ ] Verificar visualmente em viewport real de ~390px (a verificação nesta
       etapa foi via build + inspeção do HTML server-rendered; o ambiente de
       automação usado não conseguiu forçar uma janela de navegador abaixo de
@@ -110,4 +114,5 @@ importam esses arrays diretamente.
 
 A rota `portal/[slug]` (layout 4.3), o `<BarChart>` inline e o white-label
 mocado (`IntegratorTheme`) já foram implementados — ver
-`docs/portal-cliente.md`.
+`docs/portal-cliente.md`. A rota pública real com dados do Convex é
+`/c/[token]` — ver `docs/backend-convex.md`.

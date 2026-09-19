@@ -1,38 +1,45 @@
+"use client";
+
 import { KPICard } from "@/components/ui/KPICard";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { ClientTableRow } from "@/components/ui/ClientTableRow";
 import { ClientCard } from "@/components/ui/ClientCard";
-import { mockClients, mockDashboardKpis } from "@/lib/mock-data";
+import { useClients } from "@/lib/data/useClients";
+import { useKpis } from "@/lib/data/useKpis";
 
 export default function DashboardPage() {
+  const clients = useClients();
+  const kpis = useKpis();
+
+  const isLoading = clients === undefined || kpis === undefined;
+
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
       <section className="grid grid-cols-3 gap-2.5 sm:gap-4 lg:grid-cols-4">
         <KPICard
           variant="filled"
           label="Geração total (mês)"
-          value={`${mockDashboardKpis.totalGenerationKwh.toLocaleString("pt-BR")} kWh`}
-          sub="+8% vs. mês anterior"
+          value={isLoading ? "—" : `${kpis.totalGenerationKwh.toLocaleString("pt-BR")} kWh`}
+          sub="mês corrente até hoje"
         />
         <KPICard
           label="Clientes ativos"
-          value={mockDashboardKpis.activeClients.toString()}
-          sub="+18 este mês"
+          value={isLoading ? "—" : kpis.activeClients.toString()}
         />
         <KPICard
           label="Economia gerada"
-          value={`R$ ${(mockDashboardKpis.monthlySavingsBRL / 1000).toFixed(1)}k`}
+          value={isLoading ? "—" : `R$ ${(kpis.monthlySavingsBRL / 1000).toFixed(1)}k`}
           sub="acumulado no mês"
         />
         <KPICard
           label="Alertas ativos"
-          value={mockDashboardKpis.openAlerts.toString()}
+          value={isLoading ? "—" : kpis.openAlerts.toString()}
           sub="requer atenção"
         />
       </section>
 
-      {/* Mobile — lista de cards (DESIGN.md §4.4). Busca e cards são apenas visuais, ver docs/dashboard-integrador.md. */}
+      {/* Mobile — lista de cards (DESIGN.md §4.4). Busca é apenas visual, ver docs/dashboard-integrador.md. */}
       <section className="flex flex-col gap-3 md:hidden">
         <div className="relative">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-secondary">
@@ -41,18 +48,21 @@ export default function DashboardPage() {
           <Input placeholder="Buscar cliente..." className="h-10 pl-9" />
         </div>
 
-        {mockClients.map((client) => (
-          <ClientCard
-            key={client.id}
-            name={client.name}
-            city={client.city}
-            kwp={client.kwp}
-            generation={`${client.generationKwh.toLocaleString("pt-BR")} kWh`}
-            status={client.status}
-            alert={client.alert}
-            portalHref={client.slug ? `/portal/${client.slug}` : undefined}
-          />
-        ))}
+        {isLoading && <LoadingHint />}
+
+        {!isLoading &&
+          clients.map((client) => (
+            <ClientCard
+              key={client.id}
+              name={client.name}
+              city={client.city}
+              kwp={client.kwp}
+              generation={`${client.generationKwh.toLocaleString("pt-BR")} kWh`}
+              status={client.status}
+              alert={client.alert}
+              portalHref={client.slug ? `/c/${client.slug}` : undefined}
+            />
+          ))}
       </section>
 
       {/* Desktop — tabela (DESIGN.md §4.2) */}
@@ -83,7 +93,7 @@ export default function DashboardPage() {
                   kWp
                 </th>
                 <th className="py-3 px-4 text-right font-body text-[11px] font-semibold uppercase tracking-[0.6px] text-neutral-secondary">
-                  Geração set.
+                  Geração (mês)
                 </th>
                 <th className="py-3 px-4 font-body text-[11px] font-semibold uppercase tracking-[0.6px] text-neutral-secondary">
                   Status
@@ -94,31 +104,39 @@ export default function DashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {mockClients.map((client) => (
-                <ClientTableRow
-                  key={client.id}
-                  name={client.name}
-                  plant={client.plant}
-                  city={client.city}
-                  kwp={client.kwp}
-                  generationKwh={client.generationKwh}
-                  status={client.status}
-                  portalHref={client.slug ? `/portal/${client.slug}` : undefined}
-                />
-              ))}
+              {isLoading && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8">
+                    <LoadingHint />
+                  </td>
+                </tr>
+              )}
+              {!isLoading &&
+                clients.map((client) => (
+                  <ClientTableRow
+                    key={client.id}
+                    name={client.name}
+                    plant={client.plant}
+                    city={client.city}
+                    kwp={client.kwp}
+                    generationKwh={client.generationKwh}
+                    status={client.status}
+                    portalHref={client.slug ? `/c/${client.slug}` : undefined}
+                  />
+                ))}
             </tbody>
           </table>
         </div>
 
         <div className="flex items-center justify-between px-6 py-4">
           <span className="font-body text-xs text-neutral-secondary">
-            Mostrando 1–{mockClients.length} de {mockDashboardKpis.activeClients}
+            {isLoading ? "Carregando…" : `Mostrando ${clients.length} de ${clients.length}`}
           </span>
           <div className="flex items-center gap-2">
             <Button variant="neutral" size="sm" disabled>
               Anterior
             </Button>
-            <Button variant="neutral" size="sm">
+            <Button variant="neutral" size="sm" disabled>
               Próxima
             </Button>
           </div>
@@ -126,6 +144,10 @@ export default function DashboardPage() {
       </section>
     </div>
   );
+}
+
+function LoadingHint() {
+  return <p className="font-body text-sm text-neutral-secondary">Carregando clientes…</p>;
 }
 
 function SearchIcon() {

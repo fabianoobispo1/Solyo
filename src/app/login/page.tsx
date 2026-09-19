@@ -1,3 +1,8 @@
+"use client";
+
+import { FormEvent, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuthActions } from "@convex-dev/auth/react";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { SolvoLogo } from "@/components/ui/SolvoLogo";
@@ -53,14 +58,7 @@ export default function LoginPage() {
             </p>
           </div>
 
-          <div className="flex flex-col gap-4">
-            <Input label="E-mail" type="email" placeholder="voce@empresa.com" />
-            <Input label="Senha" type="password" placeholder="••••••••" />
-          </div>
-
-          <Button variant="primary" size="lg" type="button" className="w-full">
-            Entrar
-          </Button>
+          <LoginForm />
 
           <div className="flex items-center gap-3 font-body text-xs text-neutral-secondary">
             <span className="h-px flex-1 bg-neutral-border" />
@@ -68,7 +66,7 @@ export default function LoginPage() {
             <span className="h-px flex-1 bg-neutral-border" />
           </div>
 
-          <Button variant="neutral" size="lg" type="button" className="w-full gap-2.5">
+          <Button variant="neutral" size="lg" type="button" className="w-full gap-2.5" disabled>
             <GoogleIcon />
             Continuar com Google
           </Button>
@@ -85,6 +83,56 @@ export default function LoginPage() {
         </div>
       </section>
     </div>
+  );
+}
+
+function LoginForm() {
+  const { signIn } = useAuthActions();
+  const router = useRouter();
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setError(null);
+    setSubmitting(true);
+
+    const formData = new FormData(event.currentTarget);
+    formData.set("flow", "signIn");
+
+    signIn("password", formData)
+      .then(() => {
+        router.push("/dashboard");
+      })
+      .catch(() => {
+        setError("E-mail ou senha incorretos.");
+        setSubmitting(false);
+      });
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <Input
+        label="E-mail"
+        name="email"
+        type="email"
+        placeholder="voce@empresa.com"
+        autoComplete="email"
+        required
+      />
+      <Input
+        label="Senha"
+        name="password"
+        type="password"
+        placeholder="••••••••"
+        autoComplete="current-password"
+        required
+        error={error ?? undefined}
+      />
+      <Button variant="primary" size="lg" type="submit" className="w-full" disabled={submitting}>
+        {submitting ? "Entrando…" : "Entrar"}
+      </Button>
+    </form>
   );
 }
 

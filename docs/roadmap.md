@@ -1,20 +1,31 @@
 # Roadmap — Solyo
 
 Consolida os "próximos passos" espalhados em `docs/dashboard-integrador.md`,
-`docs/portal-cliente.md` e no checklist do `DESIGN.md` em uma sequência
-priorizada. Cada item aponta para o doc com o detalhe/premissa original
-quando existir.
+`docs/portal-cliente.md`, `docs/backend-convex.md`, `docs/testing.md` e no
+checklist do `DESIGN.md` em uma sequência priorizada. Cada item aponta para
+o doc com o detalhe/premissa original quando existir.
 
 ## Estado atual
 
 - Tokens, fontes e componentes base (`Button`, `StatusBadge`, `Input`,
   `KPICard`, `SolvoLogo`, `ClientTableRow`, `ClientCard`, `BarChart`, `Modal`).
-- Login (`/login`, ver `docs/login.md`) — só visual, não autentica.
-- Dashboard do integrador (`/dashboard`) responsivo (desktop + mobile) com
-  dados mocados, incluindo o modal "Novo cliente" (mock, sem persistência —
-  ver `docs/dashboard-integrador.md`).
-- Portal do cliente (`/portal/[slug]`) responsivo com white-label mocado.
-- Tudo sem autenticação real, sem API real, mas já publicado no Vercel.
+- Login (`/login`) — **autentica de verdade** via Convex Auth (Password),
+  só para o integrador. Ver `docs/login.md` e `docs/backend-convex.md`.
+- Dashboard do integrador (`/dashboard`) responsivo (desktop + mobile),
+  **dados reais** via Convex (`useClients`/`useKpis`), protegido por login
+  (redireciona pra `/login` se não autenticado). "Novo cliente" já persiste
+  de verdade. Ver `docs/dashboard-integrador.md`.
+- Portal do cliente real: **`/c/[token]`**, resolvido por um `portalToken`
+  não-adivinhável, público (sem login), dados reais via Convex. A rota
+  antiga `/portal/[slug]` continua existindo só como demo do conceito de
+  white-label, 100% mock. Ver `docs/portal-cliente.md`.
+- Backend Convex com isolamento entre tenants coberto por testes
+  automatizados (Vitest + `convex-test`). Ver `docs/backend-convex.md` e
+  `docs/testing.md`.
+- Publicado no Vercel — **atenção:** o deployment do Vercel ainda não tem as
+  variáveis `NEXT_PUBLIC_CONVEX_URL`/`NEXT_PUBLIC_CONVEX_SITE_URL` nem o
+  Convex Auth configurado num deployment de produção; o app publicado hoje
+  ainda reflete a versão anterior (só mock). Ver "Próximo deploy" abaixo.
 
 ## Fase 1 — Completar as telas do `DESIGN.md`
 
@@ -30,36 +41,51 @@ quando existir.
       especifica um para o portal); ajustado com breakpoints na mesma página,
       ver premissa em `docs/portal-cliente.md`.
 
-## Fase 2 — Tornar o dashboard funcional
+## Fase 2 — Dashboard funcional
 
+- [x] Login real + proteção de rota no grupo `(integrador)`.
+- [x] "Novo cliente" persiste de verdade (Convex).
 - [ ] Busca, filtro e paginação reais na tabela de clientes (hoje são só
-      visuais).
-- [ ] Ação do menu "···" e submit real do modal "Novo cliente" (hoje sem
-      handler/persistência).
-- [ ] Rotas `/clientes`, `/portais`, `/configuracoes` — hoje os itens da
-      Sidebar apontam para elas mas estão desabilitados por não existirem.
+      visuais — a paginação já mostra a contagem real, mas não pagina).
+- [ ] Menu "···" sem ação — a mutation `plants.update` já existe e está
+      testada (`docs/backend-convex.md`), só falta ligar a uma UI de edição.
+- [ ] Rotas `/clientes`, `/portais`, `/configuracoes`/`/conta` — hoje os
+      itens da Sidebar e do BottomNav apontam pra elas mas estão
+      desabilitados por não existirem.
 
 ## Fase 3 — Dados reais e autenticação
 
-- [ ] Definir o contrato de API (formato já esboçado nos tipos `Client`,
-      `ClientPortalData`, `IntegratorTheme`).
-- [ ] Autenticação do integrador + proteção de rota no grupo `(integrador)`
-      (a UI de login existe em `/login`, mas não está ligada a sessão nenhuma;
-      `/dashboard` continua público).
-- [ ] Decidir se o portal do cliente final precisa de login — hoje o acesso é
-      só "quem tem o link" (`docs/portal-cliente.md`).
-- [ ] Substituir `mock-data.ts`, `mock-portal.ts` e `integrator-theme.ts` por
-      chamadas reais.
-- [ ] Middleware de resolução de white-label por domínio/subdomínio, se o
-      produto optar por isso além de (ou em vez de) `/portal/[slug]`.
+- [x] Contrato de dados definido (`Client`, `DashboardKpis`,
+      `ClientPortalData` em `src/lib/mock-data.ts`/`mock-portal.ts` — os
+      hooks reais em `src/lib/data/` devolvem exatamente esses shapes).
+- [x] Autenticação do integrador (Convex Auth, só e-mail/senha) + proteção
+      de rota no grupo `(integrador)`.
+- [x] Portal do cliente final decidido como **sem login** — acesso via
+      `portalToken` não-adivinhável em `/c/[token]`.
+- [x] `mock-data.ts`/`mock-portal.ts` substituídos por Convex nas rotas
+      reais (`/dashboard`, `/c/[token]`); os mocks continuam existindo só
+      para alimentar a demo antiga `/portal/[slug]` e como tipos/fixtures.
+- [ ] `integrator-theme.ts` (cor/logo por integrador) — não migrado; o
+      schema atual não guarda isso por tenant. `/c/[token]` usa sempre o
+      verde da Solyo. Decidir se isso entra no MVP ou fica só na demo.
 
 ## Fase 4 — Produção
 
 - [ ] Deploy contínuo (Vercel) com preview por PR.
-- [ ] Testes automatizados dos componentes `ui/` e das páginas.
+- [x] Testes automatizados do backend (Convex — isolamento entre tenants,
+      cálculo de geração/economia) e de utilitários puros (`src/lib`). Ver
+      `docs/testing.md`.
+- [ ] Testes de componentes React e/ou E2E (nenhum configurado ainda —
+      documentado como lacuna consciente em `docs/testing.md`).
 - [ ] Observabilidade (erros, analytics de uso do portal).
 - [ ] Revisão de segurança do portal público (rate limiting, enumeração de
-      slugs).
+      tokens).
+- [ ] **Próximo deploy:** publicar um deployment de produção do Convex
+      (`npx convex deploy`), repetir o setup de
+      `JWT_PRIVATE_KEY`/`JWKS`/`SITE_URL` nele (`docs/backend-convex.md`),
+      apontar `NEXT_PUBLIC_CONVEX_URL`/`NEXT_PUBLIC_CONVEX_SITE_URL` do
+      Vercel pra esse deployment, e rodar o seed de demonstração lá (ou um
+      seed de produção de verdade).
 
 ## Fase 5 — Produto (fora do escopo do `DESIGN.md` atual)
 
