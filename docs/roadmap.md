@@ -57,8 +57,10 @@ detalhe/premissa original quando existir.
 - [x] "Novo cliente" persiste de verdade (Convex).
 - [x] Editar cliente — o "···" da tabela/card abre `EditClientModal`
       (`ownerName`/`city`/`capacityKwp`), ver `docs/dashboard-integrador.md`.
-- [ ] Busca, filtro e paginação reais na tabela de clientes (hoje são só
-      visuais — a paginação já mostra a contagem real, mas não pagina).
+- [x] Busca (tolerante a acento) e filtro por status reais na tabela/cards
+      — client-side por enquanto, ver `docs/dashboard-integrador.md`.
+- [ ] Paginação de verdade (continua decorativa; o rodapé já mostra a
+      contagem real filtrada).
 - [ ] Rotas `/clientes`, `/portais`, `/configuracoes`/`/conta` — hoje os
       itens da Sidebar e do BottomNav apontam pra elas mas estão
       desabilitados por não existirem.

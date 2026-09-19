@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { KPICard } from "@/components/ui/KPICard";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -10,13 +10,42 @@ import { EditClientModal } from "@/components/dashboard/EditClientModal";
 import { useClients } from "@/lib/data/useClients";
 import { useKpis } from "@/lib/data/useKpis";
 import type { Client } from "@/lib/mock-data";
+import type { StatusKind } from "@/components/ui/StatusBadge";
+import { cn } from "@/lib/cn";
+import { normalizeForSearch } from "@/lib/text";
+
+const STATUS_OPTIONS: { value: StatusKind; label: string }[] = [
+  { value: "online", label: "Online" },
+  { value: "alert", label: "Alerta" },
+  { value: "offline", label: "Offline" },
+  { value: "inactive", label: "Inativo" },
+];
 
 export default function DashboardPage() {
   const clients = useClients();
   const kpis = useKpis();
   const [editingClient, setEditingClient] = useState<Client | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilters, setStatusFilters] = useState<StatusKind[]>([]);
 
   const isLoading = clients === undefined || kpis === undefined;
+
+  const filteredClients = useMemo(() => {
+    if (!clients) return [];
+    const query = normalizeForSearch(searchQuery.trim());
+
+    return clients.filter((client) => {
+      const matchesSearch =
+        query === "" ||
+        normalizeForSearch(client.name).includes(query) ||
+        normalizeForSearch(client.city).includes(query) ||
+        normalizeForSearch(client.plant).includes(query);
+      const matchesStatus = statusFilters.length === 0 || statusFilters.includes(client.status);
+      return matchesSearch && matchesStatus;
+    });
+  }, [clients, searchQuery, statusFilters]);
+
+  const hasFilters = searchQuery.trim() !== "" || statusFilters.length > 0;
 
   return (
     <div className="flex flex-col gap-6 p-4 sm:p-6 lg:p-8">
@@ -43,19 +72,25 @@ export default function DashboardPage() {
         />
       </section>
 
-      {/* Mobile — lista de cards (DESIGN.md §4.4). Busca é apenas visual, ver docs/dashboard-integrador.md. */}
+      {/* Mobile — lista de cards (DESIGN.md §4.4). */}
       <section className="flex flex-col gap-3 md:hidden">
         <div className="relative">
           <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-neutral-secondary">
             <SearchIcon />
           </span>
-          <Input placeholder="Buscar cliente..." className="h-10 pl-9" />
+          <Input
+            placeholder="Buscar cliente..."
+            className="h-10 pl-9"
+            value={searchQuery}
+            onChange={(event) => setSearchQuery(event.target.value)}
+          />
         </div>
 
         {isLoading && <LoadingHint />}
+        {!isLoading && filteredClients.length === 0 && <EmptyHint hasFilters={hasFilters} />}
 
         {!isLoading &&
-          clients.map((client) => (
+          filteredClients.map((client) => (
             <ClientCard
               key={client.id}
               name={client.name}
@@ -77,10 +112,13 @@ export default function DashboardPage() {
             Clientes
           </h2>
           <div className="flex items-center gap-2">
-            <Input placeholder="Buscar cliente..." className="h-10 w-56" />
-            <Button variant="neutral" size="sm">
-              Filtrar
-            </Button>
+            <Input
+              placeholder="Buscar cliente..."
+              className="h-10 w-56"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+            />
+            <StatusFilterMenu selected={statusFilters} onChange={setStatusFilters} />
           </div>
         </div>
 
@@ -116,8 +154,15 @@ export default function DashboardPage() {
                   </td>
                 </tr>
               )}
+              {!isLoading && filteredClients.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8">
+                    <EmptyHint hasFilters={hasFilters} />
+                  </td>
+                </tr>
+              )}
               {!isLoading &&
-                clients.map((client) => (
+                filteredClients.map((client) => (
                   <ClientTableRow
                     key={client.id}
                     name={client.name}
@@ -136,7 +181,9 @@ export default function DashboardPage() {
 
         <div className="flex items-center justify-between px-6 py-4">
           <span className="font-body text-xs text-neutral-secondary">
-            {isLoading ? "Carregando…" : `Mostrando ${clients.length} de ${clients.length}`}
+            {isLoading
+              ? "Carregando…"
+              : `Mostrando ${filteredClients.length} de ${clients.length}`}
           </span>
           <div className="flex items-center gap-2">
             <Button variant="neutral" size="sm" disabled>
@@ -154,8 +201,71 @@ export default function DashboardPage() {
   );
 }
 
+function StatusFilterMenu({
+  selected,
+  onChange,
+}: {
+  selected: StatusKind[];
+  onChange: (value: StatusKind[]) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  function toggle(status: StatusKind) {
+    onChange(
+      selected.includes(status) ? selected.filter((value) => value !== status) : [...selected, status]
+    );
+  }
+
+  return (
+    <div className="relative">
+      {open && (
+        <div role="presentation" className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
+      )}
+
+      {open && (
+        <div className="absolute right-0 top-full z-20 mt-1 w-44 rounded-btn border border-neutral-border bg-neutral-surface p-1 shadow-lg">
+          {STATUS_OPTIONS.map((option) => (
+            <label
+              key={option.value}
+              className="flex cursor-pointer items-center gap-2.5 rounded-btn-sm px-3 py-2 font-body text-sm text-neutral-body hover:bg-neutral-bg"
+            >
+              <input
+                type="checkbox"
+                checked={selected.includes(option.value)}
+                onChange={() => toggle(option.value)}
+                className="h-4 w-4 accent-brand-emerald"
+              />
+              {option.label}
+            </label>
+          ))}
+        </div>
+      )}
+
+      <Button
+        variant="neutral"
+        size="sm"
+        type="button"
+        onClick={() => setOpen((value) => !value)}
+        className={cn(selected.length > 0 && "border-brand-emerald text-brand-emerald")}
+      >
+        Filtrar{selected.length > 0 ? ` (${selected.length})` : ""}
+      </Button>
+    </div>
+  );
+}
+
 function LoadingHint() {
   return <p className="font-body text-sm text-neutral-secondary">Carregando clientes…</p>;
+}
+
+function EmptyHint({ hasFilters }: { hasFilters: boolean }) {
+  return (
+    <p className="font-body text-sm text-neutral-secondary">
+      {hasFilters
+        ? "Nenhum cliente encontrado com esses filtros."
+        : "Nenhum cliente cadastrado ainda."}
+    </p>
+  );
 }
 
 function SearchIcon() {

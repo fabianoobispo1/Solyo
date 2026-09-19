@@ -24,6 +24,7 @@ src/lib/data/useCurrentProfile.ts       # Hook: nome/e-mail do integrador logado
 src/lib/data/usePlantMutations.ts       # Hooks: criar/editar cliente
 src/lib/mock-data.ts                    # Só os TIPOS (Client, DashboardKpis) — arrays não são mais usados aqui
 src/lib/avatar.ts                       # Iniciais + gradiente determinístico por nome
+src/lib/text.ts                         # normalizeForSearch — busca tolerante a acento
 ```
 
 A rota pública `/` é a landing page do produto (ver `docs/home.md`); a
@@ -46,13 +47,16 @@ escopados ao tenant autenticado — **não** mais os arrays de
   (mesmo padrão do projeto de referência `zapeio`). Ver `docs/backend-convex.md`.
 - **Dados vêm do Convex**, escopados ao tenant logado (`requireTenant` +
   `assertSameTenant` — isolamento coberto por testes, ver `docs/testing.md`).
-- **Busca e filtro são apenas visuais.** O campo de busca e o botão "Filtrar"
-  no cabeçalho da tabela não filtram o resultado de `useClients()` — precisam
-  de estado local ou de um parâmetro na query do Convex.
-- **Paginação é decorativa**, mas o rodapé agora mostra a contagem real
-  (`Mostrando N de N`, sem um "total maior" fictício) — os botões
-  "Anterior"/"Próxima" continuam sem função porque tudo cabe numa página só
-  neste volume de dados.
+- **Busca e filtro são reais, mas 100% client-side.** Filtram o array já
+  carregado por `useClients()` (nome/cidade/usina para a busca — comparação
+  tolerante a acento via `normalizeForSearch` em `src/lib/text.ts` — e um
+  multi-select de `status` para o filtro), não fazem uma nova query no
+  Convex. Funciona bem no volume atual; se a lista de clientes crescer
+  muito, migrar pra filtro/busca no servidor (`convex/plants.ts::list`
+  ganhando argumentos).
+- **Paginação continua decorativa**, mas o rodapé mostra a contagem real
+  (`Mostrando <filtrados> de <total>`) — os botões "Anterior"/"Próxima"
+  seguem sem função porque tudo cabe numa página só neste volume de dados.
 - **Navegação lateral parcial.** Apenas "Painel" (`/dashboard`) é um link
   funcional. "Clientes", "Portais" e "Configurações" aparecem no design mas
   suas rotas ainda não existem — foram renderizados como itens desabilitados
@@ -105,7 +109,9 @@ escopados ao tenant autenticado — **não** mais os arrays de
 
 ## Próximos passos (fora do escopo desta etapa)
 
-- [ ] Tornar busca, filtro e paginação da tabela funcionais.
+- [ ] Paginação de verdade (útil quando o volume de clientes crescer).
+- [ ] Migrar busca/filtro pra query no servidor se o array de clientes
+      ficar grande demais pra filtrar no client.
 - [ ] Editar `name` (usina), `status` e `alert` pela UI — `EditClientModal`
       só cobre `ownerName`/`city`/`capacityKwp` hoje.
 - [ ] Página `/clientes`, `/portais`, `/configuracoes`/`/conta` e ativar os
