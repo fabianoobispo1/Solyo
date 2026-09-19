@@ -25,9 +25,9 @@ src/lib/mock-data.ts                    # Só os TIPOS (Client, DashboardKpis) �
 src/lib/avatar.ts                       # Iniciais + gradiente determinístico por nome
 ```
 
-A rota pública `/` continua sendo a vitrine dos componentes base (`Button`,
-`StatusBadge`, `Input`, `KPICard`, `SolvoLogo`); o dashboard vive em `/dashboard`
-dentro do grupo de rotas `(integrador)`, protegido por login.
+A rota pública `/` é a landing page do produto (ver `docs/home.md`); a
+vitrine dos componentes base mudou pra `/kit`. O dashboard vive em
+`/dashboard`, dentro do grupo de rotas `(integrador)`, protegido por login.
 
 ## Dados
 

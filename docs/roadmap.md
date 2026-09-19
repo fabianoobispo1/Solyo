@@ -1,12 +1,16 @@
 # Roadmap — Solyo
 
-Consolida os "próximos passos" espalhados em `docs/dashboard-integrador.md`,
-`docs/portal-cliente.md`, `docs/backend-convex.md`, `docs/testing.md` e no
-checklist do `DESIGN.md` em uma sequência priorizada. Cada item aponta para
-o doc com o detalhe/premissa original quando existir.
+Consolida os "próximos passos" espalhados em `docs/home.md`,
+`docs/dashboard-integrador.md`, `docs/portal-cliente.md`,
+`docs/backend-convex.md`, `docs/testing.md` e no checklist do `DESIGN.md` em
+uma sequência priorizada. Cada item aponta para o doc com o
+detalhe/premissa original quando existir.
 
 ## Estado atual
 
+- Página inicial (`/`) — landing page real (hero, features, prévia do
+  dashboard, CTA), ver `docs/home.md`. A antiga vitrine de componentes mudou
+  pra `/kit`.
 - Tokens, fontes e componentes base (`Button`, `StatusBadge`, `Input`,
   `KPICard`, `SolvoLogo`, `ClientTableRow`, `ClientCard`, `BarChart`, `Modal`).
 - Login (`/login`) — **autentica de verdade** via Convex Auth (Password),
@@ -32,6 +36,8 @@ o doc com o detalhe/premissa original quando existir.
 ## Fase 1 — Completar as telas do `DESIGN.md`
 
 - [x] **Página de login** (layout §4.1) — `/login`, ver `docs/login.md`.
+- [x] **Página inicial** (fora do `DESIGN.md`, adicionada pelo mesmo motivo
+      que o login) — `/`, ver `docs/home.md`.
 - [x] **Modal "Novo cliente"** — `NewClientModal` + `Modal` genérico, ver
       `docs/dashboard-integrador.md`.
 - [x] **`<ClientCard>` mobile** (§4.4) — ver `docs/dashboard-integrador.md`.

@@ -41,7 +41,7 @@ Convex Auth no backend.
 ## Estrutura
 
 ```
-src/app/            # Rotas (App Router) — login, (integrador)/dashboard, portal/, c/
+src/app/            # Rotas (App Router) — home (/), login, (integrador)/dashboard, portal/, c/, kit
 src/components/ui/  # Kit de componentes base do DESIGN.md — não mexer no visual sem checar lá
 src/components/     # Composições específicas de cada superfície (layout/, dashboard/, portal/)
 src/lib/data/       # Hooks que ligam as páginas ao Convex — ver docs/backend-convex.md
@@ -54,8 +54,8 @@ docs/               # Premissas, decisões e roadmap de cada parte do produto
 
 - `DESIGN.md` — tokens visuais e checklist de telas do design.
 - `docs/roadmap.md` — estado atual e próximos passos, consolidado.
-- `docs/login.md`, `docs/dashboard-integrador.md`, `docs/portal-cliente.md`
-  — premissas e decisões de cada tela.
+- `docs/home.md`, `docs/login.md`, `docs/dashboard-integrador.md`,
+  `docs/portal-cliente.md` — premissas e decisões de cada tela.
 - `docs/backend-convex.md` — modelagem, auth, isolamento entre tenants,
   setup de env vars.
 - `docs/testing.md` — padrão de testes e o que ainda não está coberto.
