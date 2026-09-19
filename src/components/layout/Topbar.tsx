@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/Button";
+import { NewClientModal } from "@/components/dashboard/NewClientModal";
 
 export interface TopbarProps {
   greetingName: string;
@@ -10,9 +10,7 @@ export function Topbar({ greetingName }: TopbarProps) {
       <h1 className="font-display text-lg font-semibold tracking-[-0.3px] text-neutral-heading">
         Bem-vindo(a) de volta, {greetingName}
       </h1>
-      <Button variant="primary" size="sm">
-        + Novo cliente
-      </Button>
+      <NewClientModal />
     </header>
   );
 }

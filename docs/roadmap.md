@@ -8,15 +8,18 @@ quando existir.
 ## Estado atual
 
 - Tokens, fontes e componentes base (`Button`, `StatusBadge`, `Input`,
-  `KPICard`, `SolvoLogo`, `ClientTableRow`, `BarChart`).
-- Dashboard do integrador (`/dashboard`) com dados mocados.
+  `KPICard`, `SolvoLogo`, `ClientTableRow`, `BarChart`, `Modal`).
+- Login (`/login`, ver `docs/login.md`) — só visual, não autentica.
+- Dashboard do integrador (`/dashboard`) com dados mocados, incluindo o modal
+  "Novo cliente" (mock, sem persistência — ver `docs/dashboard-integrador.md`).
 - Portal do cliente (`/portal/[slug]`) com white-label mocado.
-- Tudo sem autenticação, sem API real, sem deploy.
+- Tudo sem autenticação real, sem API real, mas já publicado no Vercel.
 
 ## Fase 1 — Completar as telas do `DESIGN.md`
 
-- [ ] **Página de login** (layout §4.1) — ainda não existe nenhuma rota
-      `/login`; é a única tela descrita no design que falta implementar.
+- [x] **Página de login** (layout §4.1) — `/login`, ver `docs/login.md`.
+- [x] **Modal "Novo cliente"** — `NewClientModal` + `Modal` genérico, ver
+      `docs/dashboard-integrador.md`.
 - [ ] **`<ClientCard>` mobile** (§4.4) — reaproveitar `mockClients`, ver
       `docs/dashboard-integrador.md`.
 - [ ] **Layout mobile do dashboard** (grid de 3 KPIs, bottom nav de 4 abas).
@@ -28,7 +31,8 @@ quando existir.
 
 - [ ] Busca, filtro e paginação reais na tabela de clientes (hoje são só
       visuais).
-- [ ] Ação do menu "···" e do botão "+ Novo cliente" (hoje sem handler).
+- [ ] Ação do menu "···" e submit real do modal "Novo cliente" (hoje sem
+      handler/persistência).
 - [ ] Rotas `/clientes`, `/portais`, `/configuracoes` — hoje os itens da
       Sidebar apontam para elas mas estão desabilitados por não existirem.
 
@@ -37,7 +41,8 @@ quando existir.
 - [ ] Definir o contrato de API (formato já esboçado nos tipos `Client`,
       `ClientPortalData`, `IntegratorTheme`).
 - [ ] Autenticação do integrador + proteção de rota no grupo `(integrador)`
-      (hoje `/dashboard` é público).
+      (a UI de login existe em `/login`, mas não está ligada a sessão nenhuma;
+      `/dashboard` continua público).
 - [ ] Decidir se o portal do cliente final precisa de login — hoje o acesso é
       só "quem tem o link" (`docs/portal-cliente.md`).
 - [ ] Substituir `mock-data.ts`, `mock-portal.ts` e `integrator-theme.ts` por

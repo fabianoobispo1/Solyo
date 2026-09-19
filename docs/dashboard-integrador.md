@@ -10,6 +10,8 @@ src/app/(integrador)/dashboard/page.tsx # KPI row + tabela de clientes
 src/components/layout/Sidebar.tsx       # Navegação lateral (220px) + rodapé do usuário
 src/components/layout/Topbar.tsx        # Saudação + botão "Novo cliente" (68px)
 src/components/ui/ClientTableRow.tsx    # Linha da tabela (spec §3 <ClientTableRow>)
+src/components/ui/Modal.tsx             # Shell genérico de modal (overlay + rounded-modal)
+src/components/dashboard/NewClientModal.tsx # Botão "+ Novo cliente" + modal de cadastro (mock)
 src/lib/mock-data.ts                    # Dados mocados (clientes + KPIs agregados)
 src/lib/avatar.ts                       # Iniciais + gradiente determinístico por nome
 ```
@@ -58,12 +60,23 @@ importam esses arrays diretamente.
   (§4 "sem lib externa para o MVP").
 - **Gradiente de avatar é determinístico por hash do nome** (`src/lib/avatar.ts`),
   não aleatório — o mesmo cliente sempre recebe a mesma cor entre renders.
+- **O modal "Novo cliente" não persiste nada.** `NewClientModal` (`src/components/
+  dashboard/NewClientModal.tsx`) é um Client Component com estado local; ao
+  submeter, só mostra uma tela de confirmação mock — não chama API, não
+  adiciona linha em `mockClients` nem valida além do `required` nativo do
+  `<input>`. `Modal` (`src/components/ui/Modal.tsx`) é o shell genérico
+  (overlay, `Esc` fecha, clique fora fecha) reutilizável para outros modais
+  futuros.
 
 ## Próximos passos (fora do escopo desta etapa)
 
-- [ ] Autenticação real + proteção de rota no grupo `(integrador)`.
+- [ ] Autenticação real + proteção de rota no grupo `(integrador)` — a
+      página `/login` (ver `docs/login.md`) já existe, mas não está ligada a
+      nenhuma sessão/redirecionamento ainda.
 - [ ] Substituir `mock-data.ts` por chamadas a uma API/DB real.
 - [ ] Tornar busca, filtro e paginação da tabela funcionais.
+- [ ] Conectar o submit do `NewClientModal` a uma mutação real (hoje só
+      mostra a confirmação mock).
 - [ ] Página `/clientes`, `/portais`, `/configuracoes` e ativar os links
       correspondentes na Sidebar.
 - [ ] `<ClientCard>` (mobile) — item do checklist do `DESIGN.md` ainda não
