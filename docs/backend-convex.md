@@ -20,6 +20,7 @@ convex/plants.ts          # list / get / kpis / create / update / getByToken
 convex/profiles.ts        # me (perfil do usuário logado)
 convex/invites.ts         # create (CLI) / getStatus / accept — criação de conta por convite, ver docs/login.md
 convex/seed.ts            # seedDemoTenant — cria "Aurora Solar" + 4 clientes de MG
+convex/admin.ts           # resetPassword — troca senha de uma conta (só CLI)
 
 src/components/ConvexClientProvider.tsx  # ConvexAuthProvider (client-side, sem SSR)
 src/lib/data/                            # hooks tipados que as páginas consomem
@@ -74,6 +75,20 @@ Cria o login do integrador **Aurora Solar**:
 
 - E-mail: `contato@aurorasolar.com.br`
 - Senha: `AuroraSolar#2026`
+
+## Trocar a senha de uma conta
+
+Sem tela de "esqueci minha senha" ainda — pra resetar a senha de qualquer
+conta (útil pra contas de teste), via CLI:
+
+```
+npx convex run admin:resetPassword '{"email":"...","newPassword":"..."}'
+CONVEX_DEPLOY_KEY='<key>' npx convex run admin:resetPassword '{"email":"...","newPassword":"..."}'  # em produção
+```
+
+`admin.ts::resetPassword` é uma `internalAction` — não existe endpoint
+público pra isso, só quem tem acesso ao deployment (via CLI) consegue
+trocar senha de qualquer conta.
 
 com 4 clientes em MG (Uberlândia, Belo Horizonte, Juiz de Fora, Uberaba).
 
